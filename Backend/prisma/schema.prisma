@@ -14,17 +14,18 @@ datasource db {
 }
 
 model Main_Instagram_Data {
-  id               Int      @id @default(autoincrement())
+  id               Int        @id @default(autoincrement())
   pk_def_insta     BigInt
-  username         String   @unique
+  username         String     @unique
   fullname         String?
-  profile_picture  String   @db.VarChar(2048)
+  profile_picture  String     @db.VarChar(2048)
   is_private       Boolean
   media_post_total Int
   followers        Int
   following        Int
   biography        String?
   is_mutual        Boolean
+  last_update      DateTime?  @updatedAt
 
   relations        Relation_Status[]
 }
