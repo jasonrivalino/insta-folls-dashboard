@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma-postgre"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Main_Instagram_Data {
+  id               Int        @id @default(autoincrement())
+  pk_def_insta     BigInt
+  username         String     @unique
+  fullname         String?
+  profile_picture  String     @db.VarChar(2048)
+  is_private       Boolean
+  media_post_total Int
+  followers        Int
+  following        Int
+  biography        String?
+  is_mutual        Boolean
+  last_update      DateTime?  @updatedAt
+
+  relations        Relation_Status[]
+}
+
+model Relation_Status {
+  id                Int      @id @default(autoincrement())
+  relational        String   @unique
+  text_color String @db.Char(7)
+  bg_color   String @db.Char(7)
+
+  @@unique([text_color, bg_color])
+
+  instagram_users   Main_Instagram_Data[]
+}
