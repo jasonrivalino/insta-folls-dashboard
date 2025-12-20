@@ -15,7 +15,7 @@ datasource db {
 
 model Main_Instagram_Data {
   id               Int        @id @default(autoincrement())
-  pk_def_insta     BigInt
+  pk_def_insta     BigInt     @unique
   username         String     @unique
   fullname         String?
   profile_picture  String     @db.VarChar(2048)
