@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 
 import instaRoutes from './routes/insta.routes'
 import relationRoutes from './routes/relation.routes'
+import instaRelationalRoutes from './routes/instaRelational.routes'
 
 dotenv.config()
 
@@ -15,6 +16,7 @@ app.use(express.json())
 
 app.use('/api/insta-user-data', instaRoutes)
 app.use('/api/relational-status-data', relationRoutes)
+app.use('/api/insta-and-relational-user', instaRelationalRoutes)
 
 app.get('/', (_req, res) => {
   res.send('API running 🚀')
