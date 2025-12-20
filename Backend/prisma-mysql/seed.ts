@@ -1,21 +1,6 @@
+import { rgbToHex, randomInt } from '../src/utils/rgbcolorseed'
 import prisma from '../src/lib/prisma-mysql'
 import { faker } from '@faker-js/faker'
-
-// Function to convert RGB to Hex
-function rgbToHex(r: number, g: number, b: number) {
-  return (
-    '#' +
-    [r, g, b]
-      .map(v => v.toString(16).padStart(2, '0'))
-      .join('')
-      .toUpperCase()
-  )
-}
-
-// Function to generate a random integer between min and max (inclusive)
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
 
 async function main() {
   // Create 100 fake users

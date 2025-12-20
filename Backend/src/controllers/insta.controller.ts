@@ -1,17 +1,9 @@
+import { serializeBigInt } from '../utils/serializebigint'
 import { Request, Response } from 'express'
+import { faker } from '@faker-js/faker'
+
 // import prisma from '../lib/prisma-postgres' // Use postgres if needed
 import prisma from '../lib/prisma-mysql'
-import { faker } from '@faker-js/faker'
-import { raw } from 'body-parser'
-
-// Helper function to serialize BigInt values
-const serializeBigInt = (data: any) =>
-  JSON.parse(
-    JSON.stringify(data, (_, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    )
-  )
-
   
 // Main controller functions
 
@@ -73,7 +65,7 @@ export const getAllInstagramData = async (req: Request, res: Response) => {
       data: data
     })
   } catch (error) {
-    console.error('CREATE INSTAGRAM ERROR:', error)
+    console.error('GET INSTAGRAM ERROR:', error)
     res.status(500).json({
       success: false,
       message: 'Failed to get Instagram data',
@@ -104,7 +96,7 @@ export const getInstagramById = async (req: Request, res: Response) => {
       data: data,
     })
   } catch (error) {
-    console.error('CREATE INSTAGRAM ERROR:', error)
+    console.error('GET INSTAGRAM ERROR:', error)
     res.status(500).json({
       success: false,
       message: 'Failed to get Instagram data with ID ' + req.params.id,
@@ -226,7 +218,7 @@ export const updateInstagramData = async (req: Request, res: Response) => {
       data: serializeBigInt(rawData)
     })
   } catch (error) {
-    console.error('CREATE INSTAGRAM ERROR:', error)
+    console.error('UPDATE INSTAGRAM ERROR:', error)
     res.status(500).json({
       success: false,
       message: 'Failed to update Instagram data',
@@ -249,7 +241,7 @@ export const deleteInstagramData = async (req: Request, res: Response) => {
       message: 'Instagram data deleted successfully'
     })
   } catch (error) {
-    console.error('CREATE INSTAGRAM ERROR:', error)
+    console.error('DELETE INSTAGRAM ERROR:', error)
     res.status(500).json({
       success: false,
       message: 'Failed to delete Instagram data',
