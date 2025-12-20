@@ -3,7 +3,7 @@ export interface InstagramUser {
   pk_def_insta: bigint
   profile_picture: string
   username: string
-  full_name: string
+  fullname: string
   is_private: boolean
   media_post_total: number
   followers: number
@@ -11,4 +11,10 @@ export interface InstagramUser {
   biography: string
   is_mutual: boolean
   last_updated: Date
+}
+
+export interface InstagramUserResponse {
+  success: boolean;
+  total: number;
+  data: InstagramUser[];
 }
