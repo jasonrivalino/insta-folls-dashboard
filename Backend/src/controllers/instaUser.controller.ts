@@ -14,16 +14,56 @@ const serializeBigInt = (data: any) =>
 
   
 // Main controller functions
+
 // Fetch all Instagram users data
-export const getAllInstagramData = async (
-  req: Request,
-  res: Response
-) => {
+// Query params structure:
+// /insta-user-data?sortBy=followers&order=desc&is_private=true&is_mutual=false
+export const getAllInstagramData = async (req: Request, res: Response) => {
   try {
-    const rawData = await prisma.main_Instagram_Data.findMany({
-        orderBy: {
-            id: 'asc'
+    const {
+      sortBy,
+      order = 'desc',
+      is_private,
+      is_mutual
+    } = req.query
+
+    // Sortable fields
+    const sortableFields = ['pk_def_insta', 'username', 'fullname', 'media_post_total', 'followers', 'following']
+    const orderBy: any[] = []
+
+    if (sortBy) {
+      const sortFields = (sortBy as string).split(',')
+      const sortOrders = order
+        ? (order as string).split(',')
+        : []
+
+      sortFields.forEach((field, index) => {
+        if (sortableFields.includes(field)) {
+          orderBy.push({
+            [field]:
+              sortOrders[index] === 'asc' ? 'asc' : 'desc'
+          })
         }
+      })
+    }
+
+    // Default sort by id ascending if no valid sortBy provided
+    if (orderBy.length === 0) {
+      orderBy.push({ id: 'asc' })
+    }
+
+    // Build where filter dynamically
+    const where: any = {}
+    if (is_private !== undefined) {
+      where.is_private = is_private === 'true'
+    }
+    if (is_mutual !== undefined) {
+      where.is_mutual = is_mutual === 'true'
+    }
+
+    const rawData = await prisma.main_Instagram_Data.findMany({
+      where,
+      orderBy
     })
     const data = serializeBigInt(rawData)
 
