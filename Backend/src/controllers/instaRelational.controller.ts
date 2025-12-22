@@ -107,7 +107,6 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
 
     if (instaUserIdParam !== undefined) {
       instaUserId = Number(instaUserIdParam)
-
       if (isNaN(instaUserId)) {
         return res.status(400).json({
           success: false,
@@ -119,7 +118,6 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       const userExists = await prisma.main_Instagram_Data.findUnique({
         where: { id: instaUserId }
       })
-
       if (!userExists) {
         return res.status(404).json({
           success: false,
@@ -128,10 +126,48 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       }
     }
 
-    const query: any = {
-      orderBy: {
-        id: 'asc'
-      },
+    // Extract sort and filter query parameters
+    const { sortBy, order = 'desc', is_private, is_mutual } = req.query
+
+    // Sortable fields
+    const sortableFields = ['pk_def_insta', 'username', 'fullname', 'media_post_total', 'followers', 'following', 'gap']
+    const orderBy: any[] = []
+    const isSortingByGap = sortBy?.toString().includes('gap')
+    
+    if (sortBy) {
+      const sortFields = (sortBy as string).split(',')
+      const sortOrders = (order as string).split(',')
+
+      sortFields.forEach((field, index) => {
+        if (sortableFields.includes(field) && field !== 'gap') {
+          orderBy.push({
+            [field]: sortOrders[index] === 'asc' ? 'asc' : 'desc'
+          })
+        }
+      })
+    }
+
+    // Default sort by id ascending if no valid sortBy provided
+    if (orderBy.length === 0) {
+      orderBy.push({ id: 'asc' })
+    }
+
+    // Build where filter dynamically
+    const where: any = {}
+    if (instaUserId) {
+      where.id = instaUserId
+    }
+    if (is_private !== undefined) {
+      where.is_private = is_private === 'true'
+    }
+    if (is_mutual !== undefined) {
+      where.is_mutual = is_mutual === 'true'
+    }
+
+    // Fetch data from database with sorting and filtering
+    const rawData = await prisma.main_Instagram_Data.findMany({
+      where,
+      orderBy,
       include: {
         relations: {
           orderBy: {
@@ -139,22 +175,50 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
           }
         }
       }
-    }
-    if (instaUserId) {
-      query.where = { id: instaUserId }
-    }
-    const rawData = await prisma.main_Instagram_Data.findMany(query)
+    })
+
     const data = serializeBigInt(rawData)
 
-    const result = data
-      .map((user: { [x: string]: any; relations: any }) => {
-        const { relations, ...instagramDetail } = user
+    const result = data.map((user: { [x: string]: any; relations: any }) => {
+      const { relations } = user
 
-        return {
-          instagram_detail: instagramDetail,
-          relational_detail: relations
-        }
+      const gap =
+        typeof user.followers === 'number' && typeof user.following === 'number'
+          ? user.followers - user.following
+          : null
+
+      return {
+        instagram_detail: {
+          id: user.id,
+          pk_def_insta: user.pk_def_insta,
+          username: user.username,
+          fullname: user.fullname,
+          is_private: user.is_private,
+          followers: user.followers,
+          following: user.following,
+          gap: gap,
+          media_post_total: user.media_post_total,
+          biography: user.biography,
+          is_mutual: user.is_mutual,
+          last_updated: user.last_updated
+        },
+        relational_detail: relations
+      }
+    })
+
+    if (isSortingByGap && sortBy) {
+      const sortFields = sortBy.toString().split(',')
+      const sortOrders = order.toString().split(',')
+
+      const gapIndex = sortFields.indexOf('gap')
+      const gapOrder = sortOrders[gapIndex] === 'asc' ? 1 : -1
+
+      result.sort((a: { instagram_detail: { gap: number } }, b: { instagram_detail: { gap: number } }) => {
+        const gapA = a.instagram_detail.gap ?? Number.NEGATIVE_INFINITY
+        const gapB = b.instagram_detail.gap ?? Number.NEGATIVE_INFINITY
+        return (gapA - gapB) * gapOrder
       })
+    }
 
     return res.status(200).json({
       success: true,

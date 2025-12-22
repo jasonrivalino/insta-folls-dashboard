@@ -1,3 +1,14 @@
+export interface InstagramUserResponse {
+  success: boolean;
+  total: number;
+  data: InstaRelationalData[];
+}
+
+export interface InstaRelationalData {
+  instagram_detail: InstagramUser;
+  relational_detail: RelationalDetail[];
+}
+
 export interface InstagramUser {
   id: number
   pk_def_insta: bigint
@@ -8,13 +19,15 @@ export interface InstagramUser {
   media_post_total: number
   followers: number
   following: number
+  gap: number
   biography: string
   is_mutual: boolean
   last_updated: Date
 }
 
-export interface InstagramUserResponse {
-  success: boolean;
-  total: number;
-  data: InstagramUser[];
+export interface RelationalDetail {
+  id: number;
+  relational: string;
+  bg_color: string;
+  text_color: string;
 }
