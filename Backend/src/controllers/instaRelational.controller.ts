@@ -127,7 +127,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
     }
 
     // Extract sort and filter query parameters
-    const { sortBy, order = 'desc', is_private, is_mutual } = req.query
+    const { sortBy, order = 'desc', is_private, is_mutual, search } = req.query
 
     // Sortable fields
     const sortableFields = ['pk_def_insta', 'username', 'fullname', 'media_post_total', 'followers', 'following', 'gap']
@@ -154,14 +154,28 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
 
     // Build where filter dynamically
     const where: any = {}
+
     if (instaUserId) {
       where.id = instaUserId
     }
+
     if (is_private !== undefined) {
       where.is_private = is_private === 'true'
     }
+
     if (is_mutual !== undefined) {
       where.is_mutual = is_mutual === 'true'
+    }
+
+    if (search) {
+      where.OR = [
+        {
+          username: {
+            contains: search as string,
+            mode: 'insensitive' // Only for PostgreSQL case-insensitive search
+          }
+        },
+      ]
     }
 
     // Fetch data from database with sorting and filtering

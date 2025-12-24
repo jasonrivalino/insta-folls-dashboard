@@ -8,6 +8,7 @@ export type InstagramUserQuery = {
   order?: "asc" | "desc";
   is_private?: boolean;
   is_mutual?: boolean;
+  search?: string;
 };
 
 export const getInstagramUsers = async (

@@ -53,6 +53,7 @@ export default function InstagramUserList() {
     key: null,
     order: null,
   });
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Fetch users on component mount and when isPrivate changes
   useEffect(() => {
@@ -62,13 +63,14 @@ export default function InstagramUserList() {
         is_mutual: isMutual,
         sortBy: sort.key ?? undefined,
         order: sort.order ?? undefined,
+        search: searchQuery || undefined,
       });
 
       setUsers(data);
     };
 
     fetchUsers();
-  }, [isPrivate, isMutual, sort.key, sort.order]);
+  }, [isPrivate, isMutual, sort.key, sort.order, searchQuery]);
 
   // Handle filter changes
   const handlePrivateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -81,12 +83,20 @@ export default function InstagramUserList() {
   }
 
   // Handle sorting logic
-  const handleSortClick = (key: InstagramSortKey) => {
+  const handleSortClickName = (key: InstagramSortKey) => {
     setSort((prev) => {
       if (prev.key !== key) return { key, order: "asc" };
       if (prev.order === "asc") return { key, order: "desc" };
       if (prev.order === "desc") return { key: null, order: null };
       return { key, order: "asc" };
+    });
+  };
+  const handleSortClickNumber = (key: InstagramSortKey) => {
+    setSort((prev) => {
+      if (prev.key !== key) return { key, order: "desc" };
+      if (prev.order === "desc") return { key, order: "asc" };
+      if (prev.order === "asc") return { key: null, order: null };
+      return { key, order: "desc" };
     });
   };
 
@@ -125,6 +135,16 @@ export default function InstagramUserList() {
           <p className="text-sm text-gray-800">List of collected Instagram account information</p>
         </div>
         <div className="flex flex-row gap-4">
+          <div className="flex flex-col gap-1.5 w-44">
+            <span className="text-sm font-medium text-gray-700">Search Insta Username</span>
+            <input
+              type="text"
+              placeholder="Input Username..."
+              className="border border-gray-300 rounded-lg px-2.5 py-[0.2875rem] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 shadow-sm hover:shadow-md bg-white"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Privacy Status</span>
             <select
@@ -159,14 +179,14 @@ export default function InstagramUserList() {
             <thead className="bg-gray-100 sticky top-0 z-20 shadow-sm">
               <tr>
                 <th className={thClass}>No.</th>
-                <SortableTh label="Insta ID" column="pk_def_insta" sort={sort} onSort={handleSortClick} thClass={thClass} />
-                <SortableTh label="Username" column="username" sort={sort} onSort={handleSortClick} thClass={thClass} />
-                <SortableTh label="Full Name" column="fullname" sort={sort} onSort={handleSortClick} thClass={thClass} />
+                <SortableTh label="Insta ID" column="pk_def_insta" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
+                <SortableTh label="Username" column="username" sort={sort} onSort={handleSortClickName} thClass={thClass} />
+                <SortableTh label="Full Name" column="fullname" sort={sort} onSort={handleSortClickName} thClass={thClass} />
                 <th className={thClass}>Private</th>
-                <SortableTh label="Followers" column="followers" sort={sort} onSort={handleSortClick} thClass={thClass} />
-                <SortableTh label="Following" column="following" sort={sort} onSort={handleSortClick} thClass={thClass} />
-                <SortableTh label="Gap" column="gap" sort={sort} onSort={handleSortClick} thClass={thClass} />
-                <SortableTh label="Posts" column="media_post_total" sort={sort} onSort={handleSortClick} thClass={thClass} />
+                <SortableTh label="Followers" column="followers" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
+                <SortableTh label="Following" column="following" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
+                <SortableTh label="Gap" column="gap" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
+                <SortableTh label="Posts" column="media_post_total" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
                 <th className={thClass}>Biography</th>
                 <th className={thClass}>Mutual</th>
                 <th className={thClass}>Relations</th>
