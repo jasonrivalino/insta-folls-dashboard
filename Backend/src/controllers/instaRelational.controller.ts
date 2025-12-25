@@ -214,7 +214,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
           media_post_total: user.media_post_total,
           biography: user.biography,
           is_mutual: user.is_mutual,
-          last_updated: user.last_updated
+          last_update: user.last_update
         },
         relational_detail: relations
       }
