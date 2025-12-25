@@ -1,4 +1,4 @@
-import type { InstagramUserResponse, InstaRelationalData } from "../models/models";
+import type { InstagramUserResponse, InstaRelationalData } from "../../models/table.models";
 import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -9,6 +9,7 @@ export type InstagramUserQuery = {
   is_private?: boolean;
   is_mutual?: boolean;
   search?: string;
+  insta_user_id?: number;
 };
 
 export const getInstagramUsers = async (
@@ -40,7 +41,7 @@ export const getInstagramUsers = async (
         gap: user.instagram_detail.gap,
         biography: user.instagram_detail.biography,
         is_mutual: user.instagram_detail.is_mutual,
-        last_updated: new Date(user.instagram_detail.last_updated),
+        last_update: user.instagram_detail.last_update,
       },
       relational_detail: user.relational_detail || [],
     }));

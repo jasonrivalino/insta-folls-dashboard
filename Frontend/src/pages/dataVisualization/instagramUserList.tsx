@@ -1,5 +1,5 @@
-import { getInstagramUsers } from "../../services/instaUserList.services";
-import type { InstaRelationalData } from "../../models/models";
+import { getInstagramUsers } from "../../services/dataVisualization/instaUserList.services";
+import type { InstaRelationalData } from "../../models/table.models";
 import { useEffect, useState } from "react";
 import type React from "react";
 
@@ -128,7 +128,7 @@ export default function InstagramUserList() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Filters + Header */}
+      {/* Header + Search & Filters */}
       <div className="flex flex-row mx-auto justify-between w-full items-center">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-bold text-gray-800">Instagram Users Data</h1>
