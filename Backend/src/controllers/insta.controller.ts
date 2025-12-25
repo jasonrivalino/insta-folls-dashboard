@@ -108,7 +108,7 @@ export const getInstagramById = async (req: Request, res: Response) => {
 // Add new Instagram user data
 export const createInstagramData = async (req: Request, res: Response) => {
   try {
-    const { username, fullname, profile_picture, is_private, 
+    const { pk_def_insta, username, fullname, profile_picture, is_private, 
             media_post_total, followers, following, biography } = req.body
 
     // Required fields check
@@ -140,28 +140,55 @@ export const createInstagramData = async (req: Request, res: Response) => {
       })
     }
 
-    // Normalize fullname: if empty string, set to null
+    // Normalize fullname and biography: if empty string, set to null
     const normalizedFullname =
       typeof fullname === "string" && fullname.trim() === ""
         ? null
         : fullname
+    const normalizedBiography =
+      typeof biography === "string" && biography.trim() === ""
+        ? null
+        : biography;
 
     // Generate unique random pk_def_insta
-    let pk_def_insta: bigint
-    while (true) {
-      const randomPk = BigInt(faker.number.int({ min: 1000000000, max: 9999999999 }))
+    let finalPk: bigint
+
+    if (pk_def_insta != null && pk_def_insta !== '' && !isNaN(Number(pk_def_insta)) && BigInt(pk_def_insta) > 0) {
+      const inputPk = BigInt(pk_def_insta)
+
       const existing = await prisma.main_Instagram_Data.findUnique({
-        where: { pk_def_insta: randomPk }
+        where: { pk_def_insta: inputPk }
       })
-      if (!existing) {
-        pk_def_insta = randomPk
-        break
+
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message: "pk_def_insta already exists"
+        })
+      }
+
+      finalPk = inputPk
+    } else {
+      // Generate random unique pk
+      while (true) {
+        const randomPk = BigInt(
+          faker.number.int({ min: 1_000_000_000, max: 9_999_999_999 })
+        )
+
+        const existing = await prisma.main_Instagram_Data.findUnique({
+          where: { pk_def_insta: randomPk }
+        })
+
+        if (!existing) {
+          finalPk = randomPk
+          break
+        }
       }
     }
     
     const rawData = await prisma.main_Instagram_Data.create({
       data: {
-        pk_def_insta,
+        pk_def_insta: finalPk,
         username: username,
         fullname: normalizedFullname,
         profile_picture: profile_picture ?? faker.image.avatar(),
@@ -169,7 +196,7 @@ export const createInstagramData = async (req: Request, res: Response) => {
         media_post_total: media_post_total ?? faker.number.int({ min: 0, max: 100 }),
         followers: followers ?? faker.number.int({ min: 100, max: 5000 }),
         following: following ?? faker.number.int({ min: 100, max: 5000 }),
-        biography: biography ?? faker.lorem.sentence(),
+        biography: normalizedBiography ?? faker.lorem.sentence(),
         is_mutual: true,
         last_update: new Date(Date.now())
       }
