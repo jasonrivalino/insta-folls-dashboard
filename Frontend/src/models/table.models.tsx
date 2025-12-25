@@ -1,17 +1,19 @@
+// Connector Models
 export interface InstagramUserResponse {
   success: boolean;
   total: number;
   data: InstaRelationalData[];
 }
-
 export interface InstaRelationalData {
   instagram_detail: InstagramUser;
   relational_detail: RelationalDetail[];
 }
 
+
+// Instagram User Model
 export interface InstagramUser {
   id: number
-  pk_def_insta: bigint
+  pk_def_insta: string
   profile_picture: string
   username: string
   fullname: string
@@ -22,9 +24,16 @@ export interface InstagramUser {
   gap: number
   biography: string
   is_mutual: boolean
-  last_updated: Date
+  last_update: string
 }
 
+
+// Relational Detail Model
+export interface RelationalDetailResponse {
+  success: boolean;
+  total: number;
+  data: RelationalDetail[];
+}
 export interface RelationalDetail {
   id: number;
   relational: string;

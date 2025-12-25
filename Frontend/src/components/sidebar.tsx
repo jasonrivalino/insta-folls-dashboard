@@ -57,6 +57,9 @@ export default function Sidebar() {
               <NavLink to="/settings/relational-list" className={menuItemClass}>
                 Relational List
               </NavLink>
+              <NavLink to="/settings/profile-edit" className={menuItemClass}>
+                Profile Edit
+              </NavLink>
             </div>
           )}
         </div>

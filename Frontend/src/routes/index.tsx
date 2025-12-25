@@ -4,6 +4,7 @@ import MainDashboard from '../pages/dataVisualization/mainDashboard'
 import InstagramUserList from '../pages/dataVisualization/instagramUserList'
 import RelationalList from '../pages/settings/relationalList'
 import ChangeInstaInfo from '../pages/settings/changeInstaInfo'
+import ProfileEdit from '../pages/settings/profileEdit'
 import NotFoundPage from '../pages/handling/404NotFound'
 
 export default function AppRoutes() {
@@ -17,6 +18,7 @@ export default function AppRoutes() {
         {/* Settings Routes */}
         <Route path="/settings/change-insta-info" element={<ChangeInstaInfo />} />
         <Route path="/settings/relational-list" element={<RelationalList />} />
+        <Route path="/settings/profile-edit" element={<ProfileEdit />} />
       </Route>
 
       {/* 404 Not Found Handler */}
