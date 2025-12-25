@@ -119,6 +119,27 @@ export const createInstagramData = async (req: Request, res: Response) => {
       })
     }
 
+    // Validate numeric fields to be non-negative
+    const invalidNegativeFields: string[] = []
+
+    if (media_post_total != null && media_post_total < 0) {
+      invalidNegativeFields.push("media_post_total")
+    }
+    if (followers != null && followers < 0) {
+      invalidNegativeFields.push("followers")
+    }
+    if (following != null && following < 0) {
+      invalidNegativeFields.push("following")
+    }
+
+    if (invalidNegativeFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Negative values are not allowed",
+        error_fields: invalidNegativeFields
+      })
+    }
+
     // Normalize fullname: if empty string, set to null
     const normalizedFullname =
       typeof fullname === "string" && fullname.trim() === ""
@@ -204,6 +225,27 @@ export const updateInstagramData = async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         message: 'No data provided to update'
+      })
+    }
+
+    // Validate numeric fields to be non-negative
+    const invalidNegativeFields: string[] = []
+
+    if (media_post_total != null && media_post_total < 0) {
+      invalidNegativeFields.push("media_post_total")
+    }
+    if (followers != null && followers < 0) {
+      invalidNegativeFields.push("followers")
+    }
+    if (following != null && following < 0) {
+      invalidNegativeFields.push("following")
+    }
+
+    if (invalidNegativeFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Negative values are not allowed",
+        error_fields: invalidNegativeFields
       })
     }
 
