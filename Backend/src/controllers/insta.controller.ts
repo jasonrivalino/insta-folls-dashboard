@@ -109,7 +109,7 @@ export const getInstagramById = async (req: Request, res: Response) => {
 export const createInstagramData = async (req: Request, res: Response) => {
   try {
     const { pk_def_insta, username, fullname, is_private, 
-            media_post_total, followers, following, biography } = req.body
+            media_post_total, followers, following, biography, is_mutual } = req.body
 
     // Required fields check
     if (!username) {
@@ -195,8 +195,8 @@ export const createInstagramData = async (req: Request, res: Response) => {
         media_post_total: media_post_total ?? faker.number.int({ min: 0, max: 100 }),
         followers: followers ?? faker.number.int({ min: 100, max: 5000 }),
         following: following ?? faker.number.int({ min: 100, max: 5000 }),
-        biography: normalizedBiography ?? faker.lorem.sentence(),
-        is_mutual: true,
+        biography: normalizedBiography,
+        is_mutual: is_mutual ?? faker.datatype.boolean(),
         last_update: new Date(Date.now())
       }
     })

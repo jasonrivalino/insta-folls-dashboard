@@ -264,6 +264,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
 
     return res.status(200).json({
       success: true,
+      total: result.length,
       message: 'Get Insta Relational data text successfully',
       data: result
     })
