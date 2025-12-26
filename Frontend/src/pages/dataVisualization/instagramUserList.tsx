@@ -1,11 +1,12 @@
 import { getInstagramUsers } from "../../services/dataVisualization/instaUserList.services";
-import type { InstaRelationalData } from "../../models/table.models";
+import type { InstaRelationalData, RelationalDetail } from "../../models/table.models";
 import { useEffect, useState } from "react";
 import type React from "react";
 
 import { ListFilter } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretUp, faCaretDown } from '@fortawesome/free-solid-svg-icons'
+import { getRelationalDetails } from "../../services/settings/changeInstaInfo.services";
 
 type InstagramSortKey =
   | "pk_def_insta"
@@ -55,12 +56,31 @@ export default function InstagramUserList() {
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  // Relational Filter State
+  const [relationalList, setRelationalList] = useState<RelationalDetail[]>([]);
+  const [selectedRelationalId, setSelectedRelationalId] = useState<number | null>(null);
+
+  // Handle data fetching
+  useEffect(() => {
+    const loadRelationalData = async () => {
+      try {
+        const res = await getRelationalDetails();
+        setRelationalList(res.data);
+      } catch (error) {
+        console.error("Failed to load relational data:", error);
+      }
+    };
+
+    loadRelationalData();
+  }, []);
+
   // Fetch users on component mount and when isPrivate changes
   useEffect(() => {
     const fetchUsers = async () => {
       const data = await getInstagramUsers({
         is_private: isPrivate,
         is_mutual: isMutual,
+        relational_id: selectedRelationalId ?? undefined,
         sortBy: sort.key ?? undefined,
         order: sort.order ?? undefined,
         search: searchQuery || undefined,
@@ -70,7 +90,7 @@ export default function InstagramUserList() {
     };
 
     fetchUsers();
-  }, [isPrivate, isMutual, sort.key, sort.order, searchQuery]);
+  }, [isPrivate, isMutual, selectedRelationalId, sort.key, sort.order, searchQuery]);
 
   // Handle filter changes
   const handlePrivateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -169,12 +189,33 @@ export default function InstagramUserList() {
               <option value="false">No</option>
             </select>
           </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-gray-700">Relational</span>
+            <select
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-blue-500
+                        transition-all duration-150 shadow-sm bg-white"
+                value={selectedRelationalId ?? "all"}
+                onChange={(e) =>
+                  setSelectedRelationalId(
+                    e.target.value === "all" ? null : Number(e.target.value)
+                  )
+                }
+              >
+              <option value="all">All</option>
+              {relationalList.map((rel) => (
+                <option key={rel.id} value={rel.id}>
+                  {rel.relational}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Table */}
       <div className="relative overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-white">
-        <div className="overflow-x-auto max-h-[81.5vh]">
+        <div className="overflow-x-auto max-h-[75.9vh]">
           <table className="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead className="bg-gray-100 sticky top-0 z-20 shadow-sm">
               <tr>
@@ -273,6 +314,10 @@ export default function InstagramUserList() {
             </tbody>
           </table>
         </div>
+      </div>
+      {/* Total Users: {users.length} */}
+      <div className="text-sm text-gray-600 justify-end px-2 py-1 bg-white rounded-md shadow-sm w-fit items-end ml-auto -mt-2">
+        Total Data Shown: <b>{users.length}</b>
       </div>
     </div>
   );

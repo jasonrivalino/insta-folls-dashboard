@@ -386,7 +386,16 @@ export default function ChangeInstaInfo() {
                       >
                           <td className={tdClass}>{index + 1}</td>
                           <td className="px-4 py-2 text-sm font-medium text-center whitespace-nowrap">
-                              {user.username}
+                            {user.username ? (
+                              <a
+                                href={`https://www.instagram.com/${user.username}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {user.username}
+                              </a>
+                            ) : "-"}
                           </td>
                           <td className={tdClass}>
                             {new Date(user.last_update).toLocaleString("en-GB", {

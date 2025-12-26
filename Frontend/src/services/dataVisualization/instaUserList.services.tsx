@@ -10,6 +10,7 @@ export type InstagramUserQuery = {
   is_mutual?: boolean;
   search?: string;
   insta_user_id?: number;
+  relational_id?: number;
 };
 
 export const getInstagramUsers = async (
