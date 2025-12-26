@@ -7,6 +7,7 @@ import { ListFilter } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretUp, faCaretDown } from '@fortawesome/free-solid-svg-icons'
 import { getRelationalDetails } from "../../services/settings/changeInstaInfo.services";
+import { useMainAccount } from "../../context/useMainAccount";
 
 type InstagramSortKey =
   | "pk_def_insta"
@@ -55,6 +56,7 @@ export default function InstagramUserList() {
     order: null,
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const { account } = useMainAccount()
 
   // Relational Filter State
   const [relationalList, setRelationalList] = useState<RelationalDetail[]>([]);
@@ -245,14 +247,26 @@ export default function InstagramUserList() {
                   </td>
                 </tr>
               ) : (
-                users.map((userData, index) => {
-                  const user = userData.instagram_detail;
+                  users.map((userData, index) => {
+                    const user = userData.instagram_detail
 
-                  return (
-                    <tr
-                      key={user.id}
-                      className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-colors"
-                    >
+                    const isMainAccount =
+                      account?.username &&
+                      user.username &&
+                      account.username.toLowerCase() === user.username.toLowerCase()
+
+                    return (
+                      <tr
+                        key={user.id}
+                        className={`
+                          transition-colors hover:bg-gray-100
+                          ${
+                            isMainAccount
+                              ? "bg-yellow-200 hover:bg-yellow-300"
+                              : "odd:bg-white even:bg-gray-50"
+                          }
+                        `}
+                      >
                       <td className={tdClass}>{index + 1}</td>
                       <td className={tdClass}>{user.pk_def_insta ?? "-"}</td>
 
