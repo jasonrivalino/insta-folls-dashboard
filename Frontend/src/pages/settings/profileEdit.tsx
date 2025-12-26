@@ -1,21 +1,33 @@
+import axios from "axios";
 import { useEffect, useState } from "react"
+
 import { useMainAccount } from "../../context/useMainAccount"
-import { getPersonalProfileData } from "../../services/settings/profileEdit.services"
+import { getAvailableMainInstaAccounts, getPersonalProfileData, updateMainAccountCenter } from "../../services/settings/profileEdit.services"
+import type { InstaRelationalData } from "../../models/table.models"
+import ActionResultPopup from "../../components/actionResultPopup";
+
 import { ArrowUpDown } from "lucide-react";
 import { FiUsers, FiUserPlus, FiGrid, FiLock, FiUnlock } from "react-icons/fi"
 import { faCaretUp, faCaretDown } from '@fortawesome/free-solid-svg-icons'
-import type { InstaRelationalData } from "../../models/table.models"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function ProfileEdit() {
-  const { account } = useMainAccount()
+  const { account, refreshAccount } = useMainAccount()
   const [profile, setProfile] = useState<InstaRelationalData | null>(null)
   const [loading, setLoading] = useState(true)
 
   // Change Main Instagram Settings Modal State
+  const [availableMains, setAvailableMains] = useState<InstaRelationalData[]>([])
+  const [loadingMains, setLoadingMains] = useState(false)
+  const [hasFetchedMains, setHasFetchedMains] = useState(false)
   const [openChangeMain, setOpenChangeMain] = useState(false)
   const [selectedMain, setSelectedMain] = useState<number | null>(null)
   const isChanged = selectedMain !== account?.id
+
+  // Action Result Popup State
+  const [resultPopupOpen, setResultPopupOpen] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState<boolean | null>(null);
+  const [resultMessage, setResultMessage] = useState<React.ReactNode>(null)
 
   useEffect(() => {
     if (!account?.id) return
@@ -34,6 +46,78 @@ export default function ProfileEdit() {
 
     loadProfile()
   }, [account?.id])
+
+  // Reset Selected Main to default
+  const resetSelectedMain = () => {
+    setSelectedMain(account?.id ?? null)
+  }
+
+  // Fetch Available Main Accounts for Selection
+  const fetchAvailableMainAccounts = async () => {
+    if (hasFetchedMains || loadingMains) return
+
+    try {
+        setLoadingMains(true)
+        const mains = await getAvailableMainInstaAccounts()
+        setAvailableMains(mains)
+        setHasFetchedMains(true)
+    } catch (err) {
+        console.error("Failed to fetch main accounts:", err)
+    } finally {
+        setLoadingMains(false)
+    }
+  }
+
+  // Handle Confirm Change Main User
+  const handleConfirmChangeMainUser = async () => {
+    if (!selectedMain) return
+
+    try {
+        const selectedAccount = availableMains.find(
+        (item) => item.instagram_detail.id === selectedMain
+        )
+
+        if (!selectedAccount) {
+        throw new Error("Selected account not found.")
+        }
+
+        const { id, username } = selectedAccount.instagram_detail
+
+        // API Call to update main account
+        await updateMainAccountCenter({ id, username })
+        await refreshAccount()
+
+        // SUCCESS
+        setActionSuccess(true)
+        setResultMessage(<>Main account changed to <strong>@{username}</strong> successfully!</>)
+
+        // Optional UX improvements
+        setOpenChangeMain(false)
+        setSelectedMain(id)
+
+    } catch (error: unknown) {
+        console.error("CHANGE MAIN ACCOUNT ERROR:", error)
+
+        if (axios.isAxiosError(error)) {
+        const status = error.response?.status ?? "Unknown"
+        const details =
+            error.response?.data?.message ??
+            error.response?.statusText ??
+            "No additional details."
+
+        setResultMessage(
+            `Failed to change main account.\n${status}: ${details}`
+        )
+        } else if (error instanceof Error) {
+        setResultMessage(error.message)
+        } else {
+        setResultMessage("Unexpected error occurred.")
+        }
+        setActionSuccess(false)
+    } finally {
+        setResultPopupOpen(true)
+    }
+  }
 
   if (loading) return <p className="text-gray-600">Loading profile...</p>
   if (!profile) return <p className="text-red-500">Profile not found</p>
@@ -100,7 +184,17 @@ export default function ProfileEdit() {
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                 {/* CHANGE MAIN ACCOUNT CENTER */}
                 <button
-                    onClick={() => setOpenChangeMain(!openChangeMain)}
+                    onClick={() => {
+                        const next = !openChangeMain
+                        setOpenChangeMain(next)
+
+                        // Fetch available main accounts when opening
+                        if (next) {
+                            fetchAvailableMainAccounts()
+                        } else {
+                            resetSelectedMain()
+                        }
+                    }}
                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
                 >
                     <h3 className="text-base font-semibold text-gray-800">Change Main Account Center</h3>
@@ -111,27 +205,40 @@ export default function ProfileEdit() {
                 {openChangeMain && (
                     <div className="px-4 py-3 border-t border-gray-200 flex flex-row gap-4 items-center justify-between">
                         <div className="flex flex-row gap-4 items-center">
-                            <span className="text-sm text-gray-600 font-medium">
+                            <span className="text-base text-blue-800 font-medium">
                                 Select Main Account Center:
                             </span>
 
                             <select
                                 value={selectedMain ?? ""}
                                 onChange={(e) => setSelectedMain(Number(e.target.value))}
-                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                                 >
-                                <option value={account?.id}>
-                                    @{instagram_detail.username} (Current)
-                                </option>
+                                {loadingMains && (
+                                    <option disabled>Loading accounts...</option>
+                                )}
 
-                                {/* Example additional options */}
-                                <option value={2}>@another_account</option>
-                                <option value={3}>@brand_account</option>
+                                {!loadingMains &&
+                                    availableMains.map((item) => {
+                                    const insta = item.instagram_detail
+                                    const isCurrent = insta.id === account?.id
+
+                                    return (
+                                        <option
+                                        key={insta.id}
+                                        value={insta.id}
+                                        >
+                                        @{insta.username}
+                                        {isCurrent ? " (Current)" : ""}
+                                        </option>
+                                    )
+                                })}
                             </select>
                         </div>
 
                         {/* CONFIRM BUTTON */}
                         <button
+                            onClick={handleConfirmChangeMainUser}
                             disabled={!isChanged}
                             className={`px-6 py-2 rounded-lg text-sm font-semibold transition
                             ${
@@ -148,6 +255,16 @@ export default function ProfileEdit() {
             </div>
         </div>
       </div>
+
+      {/* Action Result Popup */}
+      {resultPopupOpen && actionSuccess !== null && (
+        <ActionResultPopup
+          isOpen={resultPopupOpen}
+          success={actionSuccess}
+          message={resultMessage}
+          onClose={() => setResultPopupOpen(false)}
+        />
+      )}
     </div>
   )
 }
