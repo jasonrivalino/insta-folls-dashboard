@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface DeletePopupProps {
   attribute: string;
   data: string;
@@ -8,6 +10,6 @@ export interface DeletePopupProps {
 export interface ActionResultPopupProps {
   isOpen: boolean;
   success: boolean;
-  message: string;
+  message?: string | ReactNode;
   onClose: () => void;
 }
