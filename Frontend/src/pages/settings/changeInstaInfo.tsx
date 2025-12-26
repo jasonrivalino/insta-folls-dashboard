@@ -56,6 +56,7 @@ export default function ChangeInstaInfo() {
     order: null,
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
   // Form mode state
   const [formMode, setFormMode] = useState<FormMode>("idle");
@@ -88,15 +89,20 @@ export default function ChangeInstaInfo() {
   // Fetch users on component mount and when isPrivate changes
   useEffect(() => {
     const fetchUsers = async () => {
-      const data = await getInstagramUsers({
-        sortBy: sort.key ?? undefined,
-        order: sort.order ?? undefined,
-        search: searchQuery || undefined,
-      });
+      try {
+        const data = await getInstagramUsers({
+          sortBy: sort.key ?? undefined,
+          order: sort.order ?? undefined,
+          search: searchQuery || undefined,
+        });
 
-      setUsers(data);
+        setUsers(data);
+      } catch (error) {
+        console.error("Failed to fetch Instagram users", error);
+      } finally {
+        setLoading(false);
+      }
     };
-
     fetchUsers();
   }, [sort.key, sort.order, searchQuery]);
 
@@ -356,7 +362,13 @@ export default function ChangeInstaInfo() {
               </thead>
 
               <tbody>
-                {users.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="p-6 text-center text-gray-500">
+                      Loading Instagram User data...
+                    </td>
+                  </tr>
+                ) : users.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="p-4 text-center text-base text-gray-500">
                       No data available
