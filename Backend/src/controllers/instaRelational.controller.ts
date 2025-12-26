@@ -126,6 +126,20 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       }
     }
 
+    const relationalIdParam = req.query.relational_id
+    let relationalId: number | null = null
+
+    // Check relationalId if provided
+    if (relationalIdParam !== undefined) {
+      relationalId = Number(relationalIdParam)
+      if (isNaN(relationalId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'relationalId must be a number'
+        })
+      }
+    }
+
     // Extract sort and filter query parameters
     const { sortBy, order = 'desc', is_private, is_mutual, search } = req.query
 
@@ -177,17 +191,31 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
         },
       ]
     }
+    
+    if (relationalId) {
+      where.relations = {
+        some: {
+          id: relationalId
+        }
+      }
+    }
+
+    // Define relational filter
+    const relationsInclude = relationalId
+    ? {
+        where: { id: relationalId },
+        orderBy: { id: 'asc' as const }
+      }
+    : {
+        orderBy: { id: 'asc' as const }
+      }
 
     // Fetch data from database with sorting and filtering
     const rawData = await prisma.main_Instagram_Data.findMany({
       where,
       orderBy,
       include: {
-        relations: {
-          orderBy: {
-            id: 'asc'
-          }
-        }
+        relations: relationsInclude
       }
     })
 
