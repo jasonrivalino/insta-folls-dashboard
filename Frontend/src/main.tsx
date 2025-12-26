@@ -1,3 +1,5 @@
+import { MainAccountProvider } from './context/MainAccountProvider.tsx'
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -15,8 +17,10 @@ import '@fontsource/roboto/800.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <MainAccountProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </MainAccountProvider>
   </StrictMode>
 )
