@@ -40,7 +40,6 @@ required_columns = [
     "pk_def_insta",
     "username",
     "fullname",
-    "profile_picture",
     "is_private",
     "media_post_total",
     "followers",
@@ -51,6 +50,7 @@ df = df[required_columns]
 
 # Add is_mutual column to set its value to True (indicating mutual followers)
 df["is_mutual"] = True
+df["last_update"] = pd.Timestamp.now().floor("s")
 
 # Change data types if necessary
 df["pk_def_insta"] = df["pk_def_insta"].astype("int64")
