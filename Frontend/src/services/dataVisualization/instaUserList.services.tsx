@@ -31,7 +31,6 @@ export const getInstagramUsers = async (
       instagram_detail: {
         id: user.instagram_detail.id,
         pk_def_insta: user.instagram_detail.pk_def_insta,
-        profile_picture: user.instagram_detail.profile_picture,
         username: user.instagram_detail.username,
         fullname: user.instagram_detail.fullname,
         is_private: user.instagram_detail.is_private,

@@ -14,7 +14,6 @@ export interface InstaRelationalData {
 export interface InstagramUser {
   id: number
   pk_def_insta: string
-  profile_picture: string
   username: string
   fullname: string
   is_private: boolean

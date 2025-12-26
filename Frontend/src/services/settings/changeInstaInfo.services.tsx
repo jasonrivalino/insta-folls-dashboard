@@ -16,7 +16,6 @@ export const getRelationalDetails = async (): Promise<RelationalDetailResponse> 
 export type InstagramUserCreatePayload = Omit<
   InstagramUser,
   | "id"
-  | "profile_picture"
   | "gap"
   | "last_update"
 >;
