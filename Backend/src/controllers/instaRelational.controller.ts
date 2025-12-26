@@ -172,7 +172,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
         {
           username: {
             contains: search as string,
-            mode: 'insensitive' // Only for PostgreSQL case-insensitive search
+            // mode: 'insensitive' // Only for PostgreSQL case-insensitive search
           }
         },
       ]
