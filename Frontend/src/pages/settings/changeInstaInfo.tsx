@@ -129,21 +129,45 @@ export default function ChangeInstaInfo() {
     return data[0] ?? null;
   };
 
-  // Get all data on edit mode
-  const handleEditClick = async (
-    userId: number,
-    relations: RelationalDetail[]
+  // Handle add / edit click
+  const handleAddEditClick = async (
+    mode: FormMode,
+    userId?: number,
+    relations: RelationalDetail[] = []
   ) => {
-    setFormMode("edit");
+    setFormMode(mode);
+
+    // Always load relational master
+    await loadRelationalData();
+
+    // Add Mode
+    if (mode === "add") {
+      setSelectedUserId(null);
+      setFormData({
+        pk_def_insta: "0",
+        username: "",
+        fullname: "",
+        is_private: false,
+        media_post_total: 0,
+        followers: 0,
+        following: 0,
+        biography: "",
+        is_mutual: false,
+      });
+      setSelectedRelationIds([]);
+      return;
+    }
+
+    // Edit Mode
+    if (!userId) return;
+
     setSelectedUserId(userId);
 
     const result = await fetchSelectedUserById(userId);
     if (!result) return;
 
     const user = result.instagram_detail;
-    console.log("EDIT USER DATA:", user);
 
-    // Fill form
     setFormData({
       pk_def_insta: user.pk_def_insta,
       username: user.username,
@@ -156,12 +180,8 @@ export default function ChangeInstaInfo() {
       is_mutual: user.is_mutual,
     });
 
-    // Load relational master (checkbox list)
-    await loadRelationalData();
-
     // Set selected relations
-    const checkedIds = relations.map((r) => r.id);
-    setSelectedRelationIds(checkedIds);
+    setSelectedRelationIds(relations.map((r) => r.id));
   };
 
   // Handle add / edit Instagram user
@@ -311,15 +331,7 @@ export default function ChangeInstaInfo() {
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Add New User</span>
-            <div onClick=
-            {async () => {setFormMode("add");
-              // Reset form
-              setFormData({ pk_def_insta: "0", username: "", fullname: "", is_private: false, media_post_total: 0, followers: 0, following: 0, biography: "", is_mutual: false });
-              setSelectedRelationIds([]);
-
-              // Fetch relational data
-              await loadRelationalData();
-            }}
+            <div onClick={() => handleAddEditClick("add")}
               className="px-2.5 py-[0.2325rem] bg-blue-500 text-white rounded-lg flex items-center gap-2 cursor-pointer"
             >
               <span>+</span>
@@ -381,7 +393,7 @@ export default function ChangeInstaInfo() {
                                   <button
                                     className="p-1 rounded border-2 border-gray-300 bg-blue-50 hover:bg-blue-100 text-blue-500 hover:text-blue-700 font-semibold shadow-sm cursor-pointer"
                                     title="Edit"
-                                    onClick={() => handleEditClick(user.id, relations)}
+                                    onClick={() => handleAddEditClick("edit", user.id, relations)}
                                   >
                                     <FiEdit2 size={18} />
                                   </button>
