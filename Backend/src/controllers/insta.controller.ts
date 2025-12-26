@@ -108,7 +108,7 @@ export const getInstagramById = async (req: Request, res: Response) => {
 // Add new Instagram user data
 export const createInstagramData = async (req: Request, res: Response) => {
   try {
-    const { pk_def_insta, username, fullname, profile_picture, is_private, 
+    const { pk_def_insta, username, fullname, is_private, 
             media_post_total, followers, following, biography } = req.body
 
     // Required fields check
@@ -191,7 +191,6 @@ export const createInstagramData = async (req: Request, res: Response) => {
         pk_def_insta: finalPk,
         username: username,
         fullname: normalizedFullname,
-        profile_picture: profile_picture ?? faker.image.avatar(),
         is_private: is_private ?? faker.datatype.boolean(),
         media_post_total: media_post_total ?? faker.number.int({ min: 0, max: 100 }),
         followers: followers ?? faker.number.int({ min: 100, max: 5000 }),
@@ -234,13 +233,12 @@ export const updateInstagramData = async (req: Request, res: Response) => {
       })
     }
     
-    const { fullname, profile_picture, is_private, media_post_total,
+    const { fullname, is_private, media_post_total,
             followers, following, biography, is_mutual } = req.body
     const updateData: any = {}
 
     // Only update fields that are provided
     if (fullname !== undefined) updateData.fullname = fullname
-    if (profile_picture !== undefined) updateData.profile_picture = profile_picture
     if (typeof is_private === 'boolean') updateData.is_private = is_private
     if (media_post_total !== undefined) updateData.media_post_total = media_post_total
     if (followers !== undefined) updateData.followers = followers

@@ -18,7 +18,6 @@ model Main_Instagram_Data {
   pk_def_insta     BigInt     @unique
   username         String     @unique
   fullname         String?
-  profile_picture  String     @db.VarChar(2048)
   is_private       Boolean
   media_post_total Int
   followers        Int
@@ -39,4 +38,10 @@ model Relation_Status {
   @@unique([text_color, bg_color])
 
   instagram_users   Main_Instagram_Data[]
+}
+
+model Main_Account_Center {
+  pk        Int    @id @default(1)
+  id        Int
+  username  String
 }

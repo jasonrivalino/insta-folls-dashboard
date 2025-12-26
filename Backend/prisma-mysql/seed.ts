@@ -8,7 +8,6 @@ async function main() {
     pk_def_insta: BigInt(faker.number.int({ min: 1000000000, max: 9999999999 })),
     username: faker.internet.username(),
     fullname: faker.person.fullName(),
-    profile_picture: faker.image.avatar(),
     is_private: faker.datatype.boolean(),
     media_post_total: faker.number.int({ min: 0, max: 100 }),
     followers: faker.number.int({ min: 100, max: 5000 }),
