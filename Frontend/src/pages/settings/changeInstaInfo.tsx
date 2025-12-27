@@ -594,7 +594,7 @@ export default function ChangeInstaInfo() {
                 {/* Relational Checkboxes */}
                 <div className="flex flex-col gap-1">
                   <h4 className="text-base font-medium text-gray-700">Relational List:</h4>
-                  <div className="flex flex-wrap gap-2 bg-white px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50 h-34 overflow-y-auto">
+                  <div className="flex flex-wrap content-start gap-2 bg-white px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50 h-34 overflow-y-auto">
                     {relationalList.map((rel) => (
                       <label
                         key={rel.id}
