@@ -96,7 +96,9 @@ export default function ChangeInstaInfo() {
           search: searchQuery || undefined,
         });
 
-        setUsers(data);
+        if (data) {
+          setUsers(data.data);
+        }
       } catch (error) {
         console.error("Failed to fetch Instagram users", error);
       } finally {
@@ -132,7 +134,7 @@ export default function ChangeInstaInfo() {
       insta_user_id: id,
     });
 
-    return data[0] ?? null;
+    return data ? data.data[0] : null;
   };
 
   // Handle add / edit click
@@ -217,7 +219,9 @@ export default function ChangeInstaInfo() {
         order: sort.order ?? undefined,
         search: searchQuery || undefined,
       });
-      setUsers(data);
+      if (data) {
+        setUsers(data.data);
+      }
 
       // Success feedback
       setActionSuccess(true);
@@ -276,7 +280,9 @@ export default function ChangeInstaInfo() {
         order: sort.order ?? undefined,
         search: searchQuery || undefined,
       });
-      setUsers(data);
+      if (data) {
+        setUsers(data.data);
+      }
 
       // Success result
       setActionSuccess(true);

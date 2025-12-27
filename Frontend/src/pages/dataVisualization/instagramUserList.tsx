@@ -1,5 +1,5 @@
 import { getInstagramUsers } from "../../services/dataVisualization/instaUserList.services";
-import type { InstaRelationalData, RelationalDetail } from "../../models/table.models";
+import type { GeneralStatistics, InstaRelationalData, RelationalDetail } from "../../models/table.models";
 import { useEffect, useState } from "react";
 import type React from "react";
 
@@ -49,6 +49,7 @@ const SortableTh = ({ label, column, sort, onSort, thClass }: { label: string; c
 
 export default function InstagramUserList() {
   const [users, setUsers] = useState<InstaRelationalData[]>([]);
+  const [stats, setStats] = useState<GeneralStatistics | null>(null)
   const [isPrivate, setIsPrivate] = useState<boolean | undefined>(undefined);
   const [isMutual, setIsMutual] = useState<boolean | undefined>(undefined);
   const [sort, setSort] = useState<SortState>({
@@ -88,7 +89,10 @@ export default function InstagramUserList() {
         search: searchQuery || undefined,
       });
 
-      setUsers(data);
+      if (data) {
+        setUsers(data.data);
+        setStats(data.general_statistics);
+      }
     };
 
     fetchUsers();
@@ -147,6 +151,36 @@ export default function InstagramUserList() {
         {value ? "Yes" : "No"}
       </span>
     );
+
+  // Gap statistics badge class
+  const gapStatClass = (value?: number) => {
+    if (typeof value !== "number") {
+      return {
+        container: "bg-white border-gray-300 shadow-gray-200",
+        text: "text-gray-600",
+      }
+    }
+
+    if (value > 0) {
+      return {
+        container: "bg-green-50 border-green-400 shadow-green-200",
+        text: "text-green-700",
+      }
+    }
+
+    if (value < 0) {
+      return {
+        container: "bg-red-50 border-red-400 shadow-red-200",
+        text: "text-red-700",
+      }
+    }
+
+    return {
+      container: "bg-blue-50 border-blue-400 shadow-blue-200",
+      text: "text-blue-700",
+    }
+  };
+  const gapStyle = gapStatClass(stats?.average_gap)
 
   return (
     <div className="flex flex-col gap-5">
@@ -329,9 +363,24 @@ export default function InstagramUserList() {
           </table>
         </div>
       </div>
-      {/* Total Users: {users.length} */}
-      <div className="text-sm text-gray-600 justify-end px-2 py-1 bg-white rounded-md shadow-sm w-fit items-end ml-auto -mt-2">
-        Total Data Shown: <b>{users.length}</b>
+      <div className="flex flex-row gap-3 ml-auto justify-end -mt-2">
+        <div className="text-sm text-gray-600 px-3 py-1 bg-white rounded-md shadow-sm">
+          Total Data: <b>{stats?.total_data ?? 0}</b>
+        </div>
+
+        <div className="text-sm text-gray-600 px-3 py-1 bg-white rounded-md shadow-sm">
+          Avg Followers: <b>{stats?.average_followers ?? "-"}</b>
+        </div>
+
+        <div className="text-sm text-gray-600 px-3 py-1 bg-white rounded-md shadow-sm">
+          Avg Following: <b>{stats?.average_following ?? "-"}</b>
+        </div>
+        
+        <div className={`text-sm px-3 py-1 rounded-md border shadow-sm ${gapStyle.container}`}>
+          <span className={gapStyle.text}>
+            Avg Gap: <b>{stats?.average_gap ?? "-"}</b>
+          </span>
+        </div>
       </div>
     </div>
   );

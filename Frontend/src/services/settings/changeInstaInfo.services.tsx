@@ -63,7 +63,7 @@ export const updateInstagramUser = async (
     insta_user_id: instaUserId,
   });
   const currentRelations =
-    users[0]?.relational_detail?.map((r) => r.id) ?? [];
+    users?.data[0]?.relational_detail?.map((r) => r.id) ?? [];
 
   // Diff relations
   const relationsToAdd = selectedRelationIds.filter(

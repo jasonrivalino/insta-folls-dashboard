@@ -1,11 +1,12 @@
 // Connector Models
 export interface InstagramUserResponse {
   success: boolean;
-  total: number;
+  general_statistics: GeneralStatistics;
   data: InstaRelationalData[];
 }
 export interface InstaRelationalData {
   instagram_detail: InstagramUser;
+  data_statistics: PersonalInstaRankings;
   relational_detail: RelationalDetail[];
 }
 
@@ -38,4 +39,18 @@ export interface RelationalDetail {
   relational: string;
   bg_color: string;
   text_color: string;
+}
+
+// General Statistics Model
+export interface GeneralStatistics {
+  total_data: number;
+  average_followers: number;
+  average_following: number;
+  average_gap: number;
+}
+export interface PersonalInstaRankings {
+  oldest_rank: number;
+  followers_rank: number;
+  following_rank: number;
+  gap_rank: number;
 }

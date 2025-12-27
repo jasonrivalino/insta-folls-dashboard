@@ -1,4 +1,4 @@
-import type { InstagramUserResponse, InstaRelationalData } from "../../models/table.models";
+import type { InstagramUserResponse } from "../../models/table.models";
 import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -15,38 +15,22 @@ export type InstagramUserQuery = {
 
 export const getInstagramUsers = async (
   query?: InstagramUserQuery
-): Promise<InstaRelationalData[]> => {
+): Promise<InstagramUserResponse | null> => {
   try {
     const response = await axios.get<InstagramUserResponse>(
       `${BACKEND_URL}/api/insta-and-relational-user/get/insta-relation-text`,
       {
         params: query,
       }
-    );
+    )
 
     if (!response.data.success) {
-      throw new Error("Failed to fetch Instagram users");
+      throw new Error("Failed to fetch Instagram users")
     }
 
-    return response.data.data.map((user) => ({
-      instagram_detail: {
-        id: user.instagram_detail.id,
-        pk_def_insta: user.instagram_detail.pk_def_insta,
-        username: user.instagram_detail.username,
-        fullname: user.instagram_detail.fullname,
-        is_private: user.instagram_detail.is_private,
-        media_post_total: user.instagram_detail.media_post_total,
-        followers: user.instagram_detail.followers,
-        following: user.instagram_detail.following,
-        gap: user.instagram_detail.gap,
-        biography: user.instagram_detail.biography,
-        is_mutual: user.instagram_detail.is_mutual,
-        last_update: user.instagram_detail.last_update,
-      },
-      relational_detail: user.relational_detail || [],
-    }));
+    return response.data
   } catch (error) {
-    console.error("Error fetching Instagram users:", error);
-    return [];
+    console.error("Error fetching Instagram users:", error)
+    return null
   }
 };
