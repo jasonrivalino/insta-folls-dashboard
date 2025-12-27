@@ -99,9 +99,18 @@ export const getInstaRelationalData = async (req: Request, res: Response) => {
   }
 }
 
+
+// Models helper
+type RankingSource = {
+  id: number
+  pk_def_insta: bigint
+  followers: number | null
+  following: number | null
+}
 // Get all relation data in text format
 export const getInstaRelationalDataText = async (req: Request, res: Response) => {
   try {
+    // Input validation for insta_user_id parameter
     const instaUserIdParam = req.query.insta_user_id
     let instaUserId: number | null = null
 
@@ -126,6 +135,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       }
     }
 
+    // Input validation for relational_id parameter
     const relationalIdParam = req.query.relational_id
     let relationalId: number | null = null
 
@@ -140,6 +150,20 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       }
     }
 
+    // Input validation for limit parameter
+    const limitParam = req.query.limit
+    let limit: number | undefined = undefined
+
+    if (limitParam !== undefined) {
+      limit = Number(limitParam)
+      if (isNaN(limit) || limit <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'limit must be a positive number'
+        })
+      }
+    }
+
     // Extract sort and filter query parameters
     const { sortBy, order = 'desc', is_private, is_mutual, search } = req.query
 
@@ -148,6 +172,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
     const orderBy: any[] = []
     const isSortingByGap = sortBy?.toString().includes('gap')
     
+    // Sorting logic
     if (sortBy) {
       const sortFields = (sortBy as string).split(',')
       const sortOrders = (order as string).split(',')
@@ -192,6 +217,8 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       ]
     }
     
+
+    // Define relational filter
     if (relationalId) {
       where.relations = {
         some: {
@@ -200,7 +227,6 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       }
     }
 
-    // Define relational filter
     const relationsInclude = relationalId
     ? {
         where: { id: relationalId },
@@ -211,16 +237,95 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       }
 
     // Fetch data from database with sorting and filtering
-    const rawData = await prisma.main_Instagram_Data.findMany({
+    const queryOptions: any = {
       where,
       orderBy,
       include: {
         relations: relationsInclude
       }
-    })
+    }
+    if (typeof limit === 'number') {
+      queryOptions.take = limit
+    }
 
+
+    // Fetch and serialize data
+    const rawData = await prisma.main_Instagram_Data.findMany(queryOptions)
+
+    // Handle for global and local statistics
+    const totalData = rawData.length
+    let rankingSourceData: RankingSource[] = rawData.map(u => ({
+        id: u.id,
+        pk_def_insta: u.pk_def_insta,
+        followers: u.followers,
+        following: u.following
+    }))
+    if (totalData === 1) {
+      rankingSourceData = await prisma.main_Instagram_Data.findMany({
+        select: {
+          id: true,
+          pk_def_insta: true,
+          followers: true,
+          following: true
+        }
+      })
+    }
+
+    // Calculate general statistics
+    const totalFollowers = rawData.reduce((sum, u) => sum + (u.followers ?? 0), 0)
+    const totalFollowing = rawData.reduce((sum, u) => sum + (u.following ?? 0), 0)
+
+    const totalGap = rawData.reduce((sum, u) => {
+      if (typeof u.followers === 'number' && typeof u.following === 'number') {
+        return sum + (u.followers - u.following)
+      }
+      return sum
+    }, 0)
+
+    const generalStatistics = {
+      total_data: totalData,
+      average_followers: totalData ? Math.round(totalFollowers / totalData) : 0,
+      average_following: totalData ? Math.round(totalFollowing / totalData) : 0,
+      average_gap: totalData ? Math.round(totalGap / totalData) : 0
+    }
+
+
+    // Prepare sorted ID lists
+    const toRankMap = (ids: number[]) =>
+      new Map(ids.map((id, index) => [id, index + 1]))
+
+    const byOldest = [...rankingSourceData]
+      .sort((a, b) =>
+        BigInt(a.pk_def_insta) > BigInt(b.pk_def_insta) ? 1 : -1
+      )
+      .map(u => u.id)
+
+    const byFollowers = [...rankingSourceData]
+      .sort((a, b) => (b.followers ?? 0) - (a.followers ?? 0))
+      .map(u => u.id)
+
+    const byFollowing = [...rankingSourceData]
+      .sort((a, b) => (b.following ?? 0) - (a.following ?? 0))
+      .map(u => u.id)
+
+    const byGap = [...rankingSourceData]
+      .sort((a, b) => {
+        const gapA = (a.followers ?? 0) - (a.following ?? 0)
+        const gapB = (b.followers ?? 0) - (b.following ?? 0)
+        return gapB - gapA
+      })
+      .map(u => u.id)
+
+    const oldestRankMap = toRankMap(byOldest)
+    const followersRankMap = toRankMap(byFollowers)
+    const followingRankMap = toRankMap(byFollowing)
+    const gapRankMap = toRankMap(byGap)
+
+    // Serialize data to handle BigInt
     const data = serializeBigInt(rawData)
 
+
+    // Prepare final result with gap and relational details
     const result = data.map((user: { [x: string]: any; relations: any }) => {
       const { relations } = user
 
@@ -244,10 +349,17 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
           is_mutual: user.is_mutual,
           last_update: user.last_update
         },
+        data_statistics: {
+          oldest_rank: oldestRankMap.get(user.id),
+          followers_rank: followersRankMap.get(user.id),
+          following_rank: followingRankMap.get(user.id),
+          gap_rank: gapRankMap.get(user.id)
+        },
         relational_detail: relations
       }
     })
 
+    // Additional sorting by gap if requested
     if (isSortingByGap && sortBy) {
       const sortFields = sortBy.toString().split(',')
       const sortOrders = order.toString().split(',')
@@ -264,8 +376,8 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
 
     return res.status(200).json({
       success: true,
-      total: result.length,
       message: 'Get Insta Relational data text successfully',
+      general_statistics: generalStatistics,
       data: result
     })
   } catch (error) {
