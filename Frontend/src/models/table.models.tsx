@@ -54,3 +54,20 @@ export interface PersonalInstaRankings {
   following_rank: number;
   gap_rank: number;
 }
+
+// Table Data Model
+export interface TableData {
+  no: number;
+  id: number;
+  pk_def_insta: string;
+  username: string;
+  fullname: string;
+  is_private: boolean;
+  media_post_total: number;
+  followers: number;
+  following: number;
+  biography: string;
+  is_mutual: boolean;
+  last_update: string;
+  relations: string[];
+}

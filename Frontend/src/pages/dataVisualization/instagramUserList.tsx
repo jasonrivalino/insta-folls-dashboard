@@ -1,7 +1,8 @@
 import { getInstagramUsers } from "../../services/dataVisualization/instaUserList.services";
-import type { GeneralStatistics, InstaRelationalData, RelationalDetail } from "../../models/table.models";
-import { useEffect, useState } from "react";
+import type { GeneralStatistics, InstaRelationalData, RelationalDetail, TableData } from "../../models/table.models";
+import { useEffect, useState, useRef } from "react";
 import type React from "react";
+import * as XLSX from "xlsx";
 
 import { ListFilter } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -58,6 +59,12 @@ export default function InstagramUserList() {
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
   const { account } = useMainAccount()
+  const username = (account?.username ?? "unknown")
+    .replace(/[^a-zA-Z0-9]/g, "");
+
+  // Download Data Handler State
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const downloadRef = useRef<HTMLDivElement | null>(null);
 
   // Relational Filter State
   const [relationalList, setRelationalList] = useState<RelationalDetail[]>([]);
@@ -97,6 +104,23 @@ export default function InstagramUserList() {
 
     fetchUsers();
   }, [isPrivate, isMutual, selectedRelationalId, sort.key, sort.order, searchQuery]);
+
+  // Close download dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        downloadRef.current &&
+        !downloadRef.current.contains(event.target as Node)
+      ) {
+        setDownloadOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Handle filter changes
   const handlePrivateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -182,6 +206,97 @@ export default function InstagramUserList() {
   };
   const gapStyle = gapStatClass(stats?.average_gap)
 
+  // Map users for download
+  const mapUsersForDownload = (users: InstaRelationalData[]): TableData[] => {
+    return users.map((u, index) => {
+      const user = u.instagram_detail;
+
+      return {
+        no: index + 1,
+        id: user.id,
+        pk_def_insta: user.pk_def_insta ?? "",
+        username: user.username ?? "",
+        fullname: user.fullname ?? "",
+        is_private: user.is_private ?? false,
+        media_post_total: user.media_post_total ?? 0,
+        followers: user.followers ?? 0,
+        following: user.following ?? 0,
+        biography: user.biography ?? "",
+        is_mutual: user.is_mutual ?? false,
+        last_update: user.last_update ?? "",
+        relations: u.relational_detail.map(r => r.relational),
+      };
+    });
+  };
+
+  // Timestampe for filenames
+  const getTimestamp = () => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    return `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  };
+
+  // Download JSON
+  const downloadJSON = (data: TableData[]) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    triggerDownload(blob, `InstagramUserData_${username}_${getTimestamp()}.json`);
+  };
+
+  // Download CSV (semicolon separated)
+  const downloadCSV = (data: TableData[]) => {
+    if (!data.length) return;
+    const headers = Object.keys(data[0]);
+
+    const rows = data.map(row =>
+      headers
+        .map(key => {
+          const value = row[key as keyof TableData];
+
+          // Handle array values (relations)
+          if (Array.isArray(value)) {
+            return `"[${value.join("; ")}]"`;
+          }
+
+          return `"${String(value).replace(/"/g, '""')}"`;
+        }).join(";")
+    );
+
+    const csv = [headers.join(";"), ...rows].join("\n");
+    const blob = new Blob([csv],
+      { type: "text/csv;charset=utf-8;" }
+    );
+    triggerDownload(blob,`InstagramUserData_${username}_${getTimestamp()}.csv`);
+  };
+
+  // Download XLSX
+  const downloadXLSX = (data: TableData[]) => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      data.map(row => ({
+        ...row,
+        relations: `[${row.relations.join(", ")}]`,
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook,worksheet,"Instagram Users");
+    XLSX.writeFile(workbook,`InstagramUserData_${username}_${getTimestamp()}.xlsx`,{ compression: true });
+  };
+
+  // Trigger download helper
+  const triggerDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-col gap-5">
       {/* Header + Search & Filters */}
@@ -190,6 +305,7 @@ export default function InstagramUserList() {
           <h1 className="text-3xl font-bold text-gray-800">Instagram Users Data</h1>
           <p className="text-sm text-gray-800">List of collected Instagram account information</p>
         </div>
+        {/* Searching Username */}
         <div className="flex flex-row gap-4">
           <div className="flex flex-col gap-1.5 w-44">
             <span className="text-sm font-medium text-gray-700">Search Insta Username</span>
@@ -201,6 +317,7 @@ export default function InstagramUserList() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          {/* Set Privacy Status */}
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Privacy Status</span>
             <select
@@ -213,6 +330,7 @@ export default function InstagramUserList() {
               <option value="false">Public</option>
             </select>
           </div>
+          {/* Set Mutual Status */}
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Is Mutual</span>
             <select
@@ -225,6 +343,7 @@ export default function InstagramUserList() {
               <option value="false">No</option>
             </select>
           </div>
+          {/* Choose User Relational Type */}
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Relational</span>
             <select
@@ -245,6 +364,59 @@ export default function InstagramUserList() {
                 </option>
               ))}
             </select>
+          </div>
+          {/* Download Data */}
+          <div ref={downloadRef} className="relative flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-gray-700">Download Data</span>
+
+            <button
+              onClick={() => setDownloadOpen(prev => !prev)}
+              className="
+                group inline-flex items-center justify-center gap-2
+                px-4 py-[0.3375rem] text-sm font-semibold text-white
+                rounded-lg
+                bg-linear-to-r from-blue-600 to-indigo-600
+                shadow-md shadow-blue-500/30
+                hover:from-blue-700 hover:to-indigo-700
+                hover:shadow-blue-500/40
+                active:scale-95
+                transition-all duration-200 cursor-pointer
+              "
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+              </svg>
+              Download
+            </button>
+
+            {downloadOpen && (
+              <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                {["All", "CSV", "JSON", "XLSX"].map(type => (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      const formatted = mapUsersForDownload(users);
+
+                      if (type === "All") {
+                        downloadCSV(formatted);
+                        downloadJSON(formatted);
+                        downloadXLSX(formatted);
+                      }
+                      if (type === "CSV") downloadCSV(formatted);
+                      if (type === "JSON") downloadJSON(formatted);
+                      if (type === "XLSX") downloadXLSX(formatted);
+
+                      setDownloadOpen(false);
+                    }}
+                    className="
+                      w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors
+                    "
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
