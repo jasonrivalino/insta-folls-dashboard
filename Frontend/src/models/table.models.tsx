@@ -44,6 +44,7 @@ export interface RelationalDetail {
 // General Statistics Model
 export interface GeneralStatistics {
   total_data: number;
+  global_total_data: number;
   average_followers: number;
   average_following: number;
   average_gap: number;

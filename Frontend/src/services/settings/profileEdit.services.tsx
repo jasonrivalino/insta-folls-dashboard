@@ -1,13 +1,13 @@
 // src/services/profileEdit.services.ts
 import axios from "axios"
-import type { InstaRelationalData } from "../../models/table.models"
+import type { InstagramUserResponse, InstaRelationalData } from "../../models/table.models"
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 // Fetch personal profile data including relational text
 export const getPersonalProfileData = async (
   instaUserId: number
-): Promise<InstaRelationalData | null> => {
+): Promise<InstagramUserResponse | null> => {
   const res = await axios.get(
     `${BACKEND_URL}/api/insta-and-relational-user/get/insta-relation-text`,
     {
@@ -16,11 +16,7 @@ export const getPersonalProfileData = async (
       },
     }
   )
-
-  const data = res.data?.data
-  if (!data || data.length === 0) return null
-
-  return data[0]
+  return res.data ?? null
 }
 
 // Fetch to get available Personal Main Instagram Accounts for selection

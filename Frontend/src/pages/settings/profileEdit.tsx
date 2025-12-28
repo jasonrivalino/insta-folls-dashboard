@@ -3,8 +3,9 @@ import { useEffect, useState } from "react"
 
 import { useMainAccount } from "../../context/useMainAccount"
 import { getAvailableMainInstaAccounts, getPersonalProfileData, updateMainAccountCenter } from "../../services/settings/profileEdit.services"
-import type { InstaRelationalData } from "../../models/table.models"
+import type { GeneralStatistics, InstaRelationalData } from "../../models/table.models"
 import ActionResultPopup from "../../components/actionResultPopup";
+import StatCard from "../../components/statCard";
 
 import { ArrowUpDown } from "lucide-react";
 import { FiUsers, FiUserPlus, FiGrid, FiLock, FiUnlock } from "react-icons/fi"
@@ -28,6 +29,7 @@ export default function ProfileEdit() {
   const [resultPopupOpen, setResultPopupOpen] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<boolean | null>(null);
   const [resultMessage, setResultMessage] = useState<React.ReactNode>(null)
+  const [generalStats, setGeneralStats] = useState<GeneralStatistics | null>(null)
 
   useEffect(() => {
     if (!account?.id) return
@@ -36,7 +38,11 @@ export default function ProfileEdit() {
     const loadProfile = async () => {
       try {
         const result = await getPersonalProfileData(account.id)
-        setProfile(result)
+        console.log("Fetched Profile Data:", result)
+        if (result) {
+          setProfile(result.data[0])
+          setGeneralStats(result.general_statistics)
+        }
       } catch (err) {
         console.error(err)
       } finally {
@@ -122,7 +128,8 @@ export default function ProfileEdit() {
   if (loading) return <p className="text-gray-600">Loading profile...</p>
   if (!profile) return <p className="text-red-500">Profile not found</p>
 
-  const { instagram_detail } = profile
+  const { instagram_detail, data_statistics } = profile
+  const totalUsers = generalStats?.global_total_data ?? 0
 
   return (
     <div className="flex flex-col gap-5">
@@ -165,17 +172,17 @@ export default function ProfileEdit() {
         </div>
 
         {/* STATS */}
-        <div className="flex flex-row justify-between gap-4">
-            <div className="w-1/4">
+        <div className="flex flex-row justify-between gap-4 items-stretch">
+            <div className="w-1/4 h-full">
                 <StatCard label="Posts" value={instagram_detail.media_post_total} icon={<FiGrid />} />
             </div>
             <div className="flex justify-center">
                 <div className="h-full w-px bg-gray-300" />
             </div>
-            <div className="grid grid-cols-3 gap-4 flex-1">
-                <StatCard label="Followers" value={instagram_detail.followers} icon={<FiUsers />} />
-                <StatCard label="Following" value={instagram_detail.following} icon={<FiUserPlus />} />
-                <StatCard label="Gap" value={instagram_detail.gap} icon={<ArrowUpDown />} />
+            <div className="grid grid-cols-3 gap-4 flex-1 h-full">
+                <StatCard label="Followers" value={instagram_detail.followers} icon={<FiUsers />} rank={data_statistics?.followers_rank} totalUsers={totalUsers}/>
+                <StatCard label="Following" value={instagram_detail.following} icon={<FiUserPlus />} rank={data_statistics?.following_rank} totalUsers={totalUsers}/>
+                <StatCard label="Gap" value={instagram_detail.gap} icon={<ArrowUpDown />} rank={data_statistics?.gap_rank} totalUsers={totalUsers}/>
             </div>
         </div>
 
@@ -265,63 +272,6 @@ export default function ProfileEdit() {
           onClose={() => setResultPopupOpen(false)}
         />
       )}
-    </div>
-  )
-}
-
-
-function StatCard({
-  label,
-  value,
-  icon,
-}: {
-  label: string
-  value: number
-  icon?: React.ReactNode
-}) {
-  const isGap = label === "Gap"
-
-  const containerClass = `
-    rounded-xl p-4 flex items-center gap-4
-    border shadow-sm transition
-    ${
-      isGap && value > 0
-        ? "bg-green-50 border-green-400 shadow-green-200"
-        : isGap && value < 0
-        ? "bg-red-50 border-red-400 shadow-red-200"
-        : "bg-white border-blue-400 shadow-blue-200"
-    }
-  `
-
-  const iconClass = `
-    text-xl
-    ${
-      isGap && value > 0
-        ? "text-green-600"
-        : isGap && value < 0
-        ? "text-red-600"
-        : "text-blue-600"
-    }
-  `
-
-  const valueClass = `
-    text-xl font-bold
-    ${
-      isGap && value > 0
-        ? "text-green-700"
-        : isGap && value < 0
-        ? "text-red-700"
-        : "text-gray-900"
-    }
-  `
-
-  return (
-    <div className={containerClass}>
-      {icon && <div className={iconClass}>{icon}</div>}
-      <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className={valueClass}>{value}</p>
-      </div>
     </div>
   )
 }

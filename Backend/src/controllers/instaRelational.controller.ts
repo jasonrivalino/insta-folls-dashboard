@@ -276,6 +276,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
         }
       })
     }
+    const globalTotalData = await prisma.main_Instagram_Data.count()
 
     // Calculate general statistics
     const totalFollowers = rawData.reduce((sum, u) => sum + (u.followers ?? 0), 0)
@@ -290,6 +291,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
 
     const generalStatistics = {
       total_data: totalData,
+      global_total_data: globalTotalData,
       average_followers: totalData ? Math.round(totalFollowers / totalData) : 0,
       average_following: totalData ? Math.round(totalFollowing / totalData) : 0,
       average_gap: totalData ? Math.round(totalGap / totalData) : 0
@@ -359,7 +361,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
           oldest_rank: oldestRankMap.get(user.id),
           followers_rank: followersRankMap.get(user.id),
           following_rank: followingRankMap.get(user.id),
-          gap_rank: gapRankMap.get(user.id)
+          gap_rank: gapRankMap.get(user.id),
         },
         relational_detail: relations
       }
