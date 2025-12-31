@@ -11,6 +11,7 @@ export type InstagramUserQuery = {
   search?: string;
   insta_user_id?: number;
   relational_id?: number;
+  limit?: number;
 };
 
 export const getInstagramUsers = async (
