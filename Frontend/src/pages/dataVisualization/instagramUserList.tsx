@@ -4,11 +4,13 @@ import { useEffect, useState, useRef } from "react";
 import type React from "react";
 import * as XLSX from "xlsx";
 
-import { ListFilter } from "lucide-react";
+import { ArrowUpDown, ListFilter } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretUp, faCaretDown } from '@fortawesome/free-solid-svg-icons'
+import { FiGrid, FiLock, FiUnlock, FiUserPlus, FiUsers } from "react-icons/fi";
 import { getRelationalDetails } from "../../services/settings/changeInstaInfo.services";
 import { useMainAccount } from "../../context/useMainAccount";
+import StatCard from "../../components/statCard";
 
 type InstagramSortKey =
   | "pk_def_insta"
@@ -65,6 +67,9 @@ export default function InstagramUserList() {
   // Download Data Handler State
   const [downloadOpen, setDownloadOpen] = useState(false);
   const downloadRef = useRef<HTMLDivElement | null>(null);
+
+  // Selected User Detail State
+  const [selectedUser, setSelectedUser] = useState<InstaRelationalData | null>(null);
 
   // Relational Filter State
   const [relationalList, setRelationalList] = useState<RelationalDetail[]>([]);
@@ -205,6 +210,7 @@ export default function InstagramUserList() {
     }
   };
   const gapStyle = gapStatClass(stats?.average_gap)
+  const totalUsers = stats?.total_data ?? 0
 
   // Map users for download
   const mapUsersForDownload = (users: InstaRelationalData[]): TableData[] => {
@@ -428,6 +434,7 @@ export default function InstagramUserList() {
             <thead className="bg-gray-100 sticky top-0 z-20 shadow-sm">
               <tr>
                 <th className={thClass}>No.</th>
+                <th className={thClass}>Detail</th>
                 <SortableTh label="Insta ID" column="pk_def_insta" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
                 <SortableTh label="Username" column="username" sort={sort} onSort={handleSortClickName} thClass={thClass} />
                 <SortableTh label="Full Name" column="fullname" sort={sort} onSort={handleSortClickName} thClass={thClass} />
@@ -474,6 +481,23 @@ export default function InstagramUserList() {
                         `}
                       >
                       <td className={tdClass}>{index + 1}</td>
+                      <td className={tdClass}>
+                        <button
+                          onClick={() => setSelectedUser(userData)}
+                          className="
+                            inline-flex items-center justify-center
+                            px-2 py-1
+                            bg-blue-600 text-white
+                            rounded-md
+                            text-xs font-medium
+                            hover:bg-blue-700
+                            transition-colors
+                            cursor-pointer
+                          "
+                        >
+                          Detail
+                        </button>
+                      </td>
                       <td className={tdClass}>{user.pk_def_insta ?? "-"}</td>
 
                       <td className="px-4 py-2 text-sm font-medium text-center whitespace-nowrap">
@@ -554,6 +578,120 @@ export default function InstagramUserList() {
           </span>
         </div>
       </div>
+
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-20">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-full p-6 relative animate-fadeIn">
+
+            {/* CLOSE */}
+            <button
+              onClick={() => setSelectedUser(null)}
+              className="absolute top-3 right-3 text-red-600 hover:text-red-800 transition-colors text-xl font-bold cursor-pointer"
+              aria-label="Close"
+            >
+              ❌
+            </button>
+
+            {/* CONTENT */}
+            <div className="flex flex-col gap-6">
+              <h2 className="text-3xl font-bold text-gray-800 text-center">
+                Instagram User Detail
+              </h2>
+
+              <div className="flex flex-col bg-gray-100 p-3 rounded-xl shadow-sm border border-gray-200 gap-3">
+                  <div className="flex justify-between items-start">
+                      <div className="flex flex-col items-start">
+                          <h4 className="text-sm text-gray-500">User PK: #{selectedUser.instagram_detail.pk_def_insta} ({selectedUser.data_statistics?.oldest_rank} of {totalUsers})</h4>
+
+                          <a
+                            href={`https://www.instagram.com/${selectedUser.instagram_detail.username}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xl font-bold text-blue-600 hover:underline"
+                          >
+                            @{selectedUser.instagram_detail.username}
+                          </a>
+
+                          <p className="text-gray-500 font-semibold">{selectedUser.instagram_detail.fullname}</p>
+
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {selectedUser.relational_detail.length > 0
+                              ? selectedUser.relational_detail.map(r => (
+                                  <span
+                                    key={r.id}
+                                    className="px-2 py-0.5 rounded-full text-xs font-medium"
+                                    style={{
+                                      backgroundColor: r.bg_color,
+                                      color: r.text_color,
+                                    }}
+                                  >
+                                    {r.relational}
+                                  </span>
+                                ))
+                              : "-"}
+                          </div>
+                      </div>
+                      <div className="ml-auto flex flex-row items-end gap-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold rounded-lg bg-white px-2 py-1 border border-gray-300">
+                            {selectedUser.instagram_detail.is_private ? (
+                            <>
+                                <FiLock className="text-red-500" />
+                                Private Account
+                            </>
+                            ) : (
+                            <>
+                                <FiUnlock className="text-green-600" />
+                                Public Account
+                            </>
+                            )}
+                        </div>
+                        <div
+                          className={`
+                            flex items-center gap-2 text-sm font-semibold rounded-lg px-2 py-1 border
+                            ${
+                              selectedUser.instagram_detail.is_mutual
+                                ? "bg-green-50 text-green-700 border-green-300"
+                                : "bg-red-50 text-red-700 border-red-300"
+                            }
+                          `}
+                        >
+                            {selectedUser.instagram_detail.is_mutual ? (
+                            <>
+                                Mutual
+                            </>
+                            ) : (
+                            <>
+                                Not Mutual
+                            </>
+                            )}
+                        </div>
+                      </div>
+                  </div>
+                  <div className="bg-white p-2 rounded-lg border border-gray-200 shadow-sm w-full">
+                      <p className="text-gray-700 whitespace-pre-line text-sm">
+                          {selectedUser.instagram_detail.biography || "-"}
+                      </p>
+                  </div>
+              </div>
+
+              {/* STATS */}
+              <div className="flex flex-row justify-between gap-4 items-stretch">
+                  <div className="w-1/4 h-full">
+                      <StatCard label="Posts" value={selectedUser.instagram_detail.media_post_total} icon={<FiGrid />} />
+                  </div>
+                  <div className="flex justify-center">
+                      <div className="h-full w-px bg-gray-300" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 flex-1 h-full">
+                      <StatCard label="Followers" value={selectedUser.instagram_detail.followers} icon={<FiUsers />} rank={selectedUser.data_statistics?.followers_rank} totalUsers={totalUsers}/>
+                      <StatCard label="Following" value={selectedUser.instagram_detail.following} icon={<FiUserPlus />} rank={selectedUser.data_statistics?.following_rank} totalUsers={totalUsers}/>
+                      <StatCard label="Gap" value={selectedUser.instagram_detail.gap} icon={<ArrowUpDown />} rank={selectedUser.data_statistics?.gap_rank} totalUsers={totalUsers}/>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
