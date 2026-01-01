@@ -3,6 +3,8 @@ import { getInstagramUsers, type InstagramUserQuery } from "../../services/dataV
 import type { InstaRelationalData, GeneralStatistics, RelationalDetail } from "../../models/table.models"
 import { getRelationalDetails } from "../../services/settings/changeInstaInfo.services"
 
+import BarChart from "../../components/graph/barChart"
+
 export default function MainDashboard() {
   const [stats, setStats] = useState<GeneralStatistics | null>(null)
 
@@ -16,6 +18,11 @@ export default function MainDashboard() {
   const [isMutual, setIsMutual] = useState<boolean | undefined>(undefined);
   const [relationalList, setRelationalList] = useState<RelationalDetail[]>([]);
   const [selectedRelationalId, setSelectedRelationalId] = useState<number | null>(null);
+
+  // Dashboard states
+  const [chartDataSource, setChartDataSource] = useState<InstaRelationalData[]>([])
+  const [bins, setBins] = useState<number>(4)
+  const [maxRange, setMaxRange] = useState<number>(2000)
 
   // Handle data fetching
   useEffect(() => {
@@ -47,6 +54,7 @@ export default function MainDashboard() {
         const mainRes = await getInstagramUsers(filterParams)
         if (mainRes) {
             setStats(mainRes.general_statistics)
+            setChartDataSource(mainRes.data)
         }
 
         // TOP 3 FOLLOWERS
@@ -105,14 +113,14 @@ export default function MainDashboard() {
   if (!stats) return null
 
 return (
-    <div className="space-y-4">
-        <div className="flex flex-col w-full gap-4 pt-6 pb-10 bg-white rounded-xl shadow-sm">
+    <div className="space-y-6">
+        <div className="flex flex-col w-full gap-5 pt-5 pb-10 bg-white rounded-xl shadow-sm">
             <h2 className="text-2xl font-bold text-center">Main Instagram Preview Information</h2>
-            <div className="flex flex-row gap-6 justify-center">
-                <div className="rounded-xl border bg-gray-100 shadow-sm flex flex-row">
+            <div className="flex flex-row gap-6 justify-center px-5">
+                <div className="rounded-xl border bg-gray-100 shadow-sm flex flex-row divide-x divide-black">
                     {/* COL 1 — TOTAL DATA */}
                     <div className="flex flex-col justify-center items-center px-6 py-4 gap-1">
-                        <p className="text-xs font-semibold uppercase text-gray-500">
+                        <p className="text-xs font-semibold uppercase text-gray-500 text-center">
                             Total Data
                         </p>
                         <p className="text-3xl font-bold text-gray-900">
@@ -120,11 +128,8 @@ return (
                         </p>
                     </div>
 
-                    {/* Border Separator */}
-                    <div className="border-l border-black self-stretch"></div>
-
                     {/* COL 2 — AVERAGES */}
-                    <div className="flex flex-col justify-center items-center px-6 py-4 gap-3">
+                    <div className="flex flex-col justify-center items-center px-6 py-4 gap-3 min-w-1/5">
                         <div>
                             <p className="text-xs font-semibold uppercase text-gray-500">
                                 Average Followers
@@ -144,18 +149,15 @@ return (
                         </div>
                     </div>
 
-                    {/* Border Separator */}
-                    <div className="border-l border-black self-stretch"></div>
-
-                    <div className="flex flex-row justify-center items-center px-6 py-4 gap-10">
+                    <div className="flex flex-row justify-center items-center px-6 py-4 gap-5">
                         {/* COL 3 — TOP FOLLOWERS */}
-                        <div className="items-center">
-                            <p className="text-xs font-semibold uppercase text-gray-500 mb-2">
+                        <div className="flex flex-col gap-1.5">
+                            <p className="text-xs font-semibold uppercase text-gray-500">
                                 Top 3 Followers
                             </p>
                             <ul className="space-y-1 text-sm font-semibold">
                                 {topFollowers.map((u) => (
-                                    <li key={u.instagram_detail.id}>
+                                    <li key={u.instagram_detail.id} className="whitespace-nowrap">
                                         <a
                                             href={`https://www.instagram.com/${u.instagram_detail.username}`}
                                             target="_blank"
@@ -169,13 +171,13 @@ return (
                         </div>
 
                         {/* COL 4 — TOP FOLLOWING */}
-                        <div>
-                            <p className="text-xs font-semibold uppercase text-gray-500 mb-2">
+                        <div className="flex flex-col gap-1.5">
+                            <p className="text-xs font-semibold uppercase text-gray-500">
                                 Top 3 Following
                             </p>
                             <ul className="space-y-1 text-sm font-semibold">
                                 {topFollowing.map((u) => (
-                                    <li key={u.instagram_detail.id}>
+                                    <li key={u.instagram_detail.id} className="whitespace-nowrap">
                                         <a
                                             href={`https://www.instagram.com/${u.instagram_detail.username}`}
                                             target="_blank"
@@ -188,9 +190,6 @@ return (
                             </ul>
                         </div>
                     </div>
-
-                    {/* Border Separator */}
-                    <div className="border-l border-black self-stretch"></div>
 
                     {/* COL 5 — OLDEST / NEWEST */}
                     <div className="flex flex-col justify-center px-6 py-4 gap-5">
@@ -205,7 +204,7 @@ return (
                                             href={`https://www.instagram.com/${oldestAccount.instagram_detail.username}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-blue-600 hover:underline">
+                                            className="block max-w-full font-semibold text-blue-600 hover:underline truncate">
                                             @{oldestAccount.instagram_detail.username}
                                         </a>
                                     </p>
@@ -224,7 +223,7 @@ return (
                                             href={`https://www.instagram.com/${newestAccount.instagram_detail.username}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-blue-600 hover:underline">
+                                            className="block max-w-full font-semibold text-blue-600 hover:underline truncate">
                                             @{newestAccount.instagram_detail.username}
                                         </a>
                                     </p>
@@ -235,9 +234,9 @@ return (
                 </div>
 
                 {/* Set Mutual Status */}
-                <div className="shrink-0 bg-gray-100 p-4 rounded-xl border shadow-sm flex flex-col gap-3 align-middle justify-center">
+                <div className="bg-gray-100 p-4 rounded-xl border shadow-sm flex flex-col gap-3 align-middle justify-center">
                     <div className="flex flex-row gap-4 items-center">
-                        <span className="text-sm font-medium text-gray-700 mr-1 w-1/2">Is Mutual: </span>
+                        <span className="text-sm font-medium text-gray-700 w-3/5">Is Mutual: </span>
                         <select
                             className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm
                                     focus:outline-none focus:ring-2 focus:ring-blue-500
@@ -251,7 +250,7 @@ return (
                         </select>
                     </div>
                     <div className="flex flex-row gap-4 items-center">
-                        <span className="text-sm font-medium text-gray-700 w-1/2">Relational:</span>
+                        <span className="text-sm font-medium text-gray-700 w-3/5">Relational:</span>
                         <select
                             className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm
                                     focus:outline-none focus:ring-2 focus:ring-blue-500
@@ -275,11 +274,71 @@ return (
             </div>
         </div>
         {/* Dashboard Graphic Visualization */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col space-y-4">
             <h2 className="text-2xl font-bold text-center">Dashboard Visualizations</h2>
-            {/* Placeholder for future charts/graphs */}
-            <div className="h-64 flex items-center justify-center text-gray-400 italic">
-                Charts and graphs will be displayed here.
+            {/* Followers / Following Chart */}
+            <div className="flex flex-col gap-4 bg-gray-200 p-4 rounded-xl shadow-md">
+                <div className="flex flex-row justify-between items-center">
+                    <div className="flex flex-col gap-0.5">
+                        <h2 className="text-xl font-semibold">Followers / Following Distribution</h2>
+                        <p className="text-sm text-gray-600">Distribution of followers and following counts among the Instagram accounts.</p>
+                    </div>
+                    <div className="flex flex-row gap-3">
+                        <div className="flex flex-col gap-1 items-left">
+                            <span className="text-sm font-medium text-gray-600">
+                                Distribution Scale:
+                            </span>
+                            <select
+                                value={bins}
+                                onChange={(e) => setBins(Number(e.target.value))}
+                                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white
+                                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                                    transition-all duration-150 shadow-sm"
+                                >
+                                <option value={2}>2</option>
+                                <option value={4}>4</option>
+                                <option value={5}>5</option>
+                                <option value={8}>8</option>
+                                <option value={10}>10</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-1 items-left">
+                            <span className="text-sm font-medium text-gray-600">
+                                Max Range:
+                            </span>
+                            <select
+                                value={maxRange}
+                                onChange={(e) => setMaxRange(Number(e.target.value))}
+                                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white
+                                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                                    transition-all duration-150 shadow-sm"
+                                >
+                                <option value={1000}>1000</option>
+                                <option value={2000}>2000</option>
+                                <option value={3000}>3000</option>
+                                <option value={4000}>4000</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex flex-row gap-4 justify-center">
+                    <BarChart
+                        data={chartDataSource}
+                        field="followers"
+                        maxRange={maxRange}
+                        title="Followers Distribution"
+                        bins={bins}
+                        showData="accounts"
+                    />
+                    <BarChart
+                        data={chartDataSource}
+                        field="following"
+                        maxRange={maxRange}
+                        title="Following Distribution"
+                        bins={bins}
+                        showData="accounts"
+                    />
+                </div>
             </div>
         </div>
     </div>

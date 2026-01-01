@@ -138,7 +138,7 @@ export default function InstagramUserList() {
   }
 
   // Handle sorting logic
-  const handleSortClickName = (key: InstagramSortKey) => {
+  const handleSortClickAsc = (key: InstagramSortKey) => {
     setSort((prev) => {
       if (prev.key !== key) return { key, order: "asc" };
       if (prev.order === "asc") return { key, order: "desc" };
@@ -146,7 +146,7 @@ export default function InstagramUserList() {
       return { key, order: "asc" };
     });
   };
-  const handleSortClickNumber = (key: InstagramSortKey) => {
+  const handleSortClickDesc = (key: InstagramSortKey) => {
     setSort((prev) => {
       if (prev.key !== key) return { key, order: "desc" };
       if (prev.order === "desc") return { key, order: "asc" };
@@ -435,14 +435,14 @@ export default function InstagramUserList() {
               <tr>
                 <th className={thClass}>No.</th>
                 <th className={thClass}>Detail</th>
-                <SortableTh label="Insta ID" column="pk_def_insta" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
-                <SortableTh label="Username" column="username" sort={sort} onSort={handleSortClickName} thClass={thClass} />
-                <SortableTh label="Full Name" column="fullname" sort={sort} onSort={handleSortClickName} thClass={thClass} />
+                <SortableTh label="Insta ID" column="pk_def_insta" sort={sort} onSort={handleSortClickAsc} thClass={thClass} />
+                <SortableTh label="Username" column="username" sort={sort} onSort={handleSortClickAsc} thClass={thClass} />
+                <SortableTh label="Full Name" column="fullname" sort={sort} onSort={handleSortClickAsc} thClass={thClass} />
                 <th className={thClass}>Private</th>
-                <SortableTh label="Followers" column="followers" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
-                <SortableTh label="Following" column="following" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
-                <SortableTh label="Gap" column="gap" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
-                <SortableTh label="Posts" column="media_post_total" sort={sort} onSort={handleSortClickNumber} thClass={thClass} />
+                <SortableTh label="Followers" column="followers" sort={sort} onSort={handleSortClickDesc} thClass={thClass} />
+                <SortableTh label="Following" column="following" sort={sort} onSort={handleSortClickDesc} thClass={thClass} />
+                <SortableTh label="Gap" column="gap" sort={sort} onSort={handleSortClickDesc} thClass={thClass} />
+                <SortableTh label="Posts" column="media_post_total" sort={sort} onSort={handleSortClickDesc} thClass={thClass} />
                 <th className={thClass}>Biography</th>
                 <th className={thClass}>Mutual</th>
                 <th className={thClass}>Relations</th>
@@ -514,7 +514,7 @@ export default function InstagramUserList() {
                       </td>
 
                       <td className="px-4 py-2 text-sm text-gray-700 text-center whitespace-nowrap max-w-56 truncate">
-                        {user.fullname ?? "-"}
+                        {user.fullname?.trim() ? user.fullname : "-"}
                       </td>
 
                       <td className={tdClass}>{privateBadge(user.is_private)}</td>
