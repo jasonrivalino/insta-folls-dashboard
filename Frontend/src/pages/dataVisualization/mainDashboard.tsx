@@ -4,6 +4,8 @@ import type { InstaRelationalData, GeneralStatistics, RelationalDetail } from ".
 import { getRelationalDetails } from "../../services/settings/changeInstaInfo.services"
 
 import BarChart from "../../components/graph/barChart"
+import ScatterChart from "../../components/graph/scatterPlot"
+import { mapScatterFollowersFollowing } from "../../services/dataVisualization/mainDashboard.services"
 
 export default function MainDashboard() {
   const [stats, setStats] = useState<GeneralStatistics | null>(null)
@@ -22,7 +24,8 @@ export default function MainDashboard() {
   // Dashboard states
   const [chartDataSource, setChartDataSource] = useState<InstaRelationalData[]>([])
   const [bins, setBins] = useState<number>(4)
-  const [maxRange, setMaxRange] = useState<number>(2000)
+  const [maxRangeFolls, setMaxRangeFolls] = useState<number>(2000)
+  const [maxRangeGaps, setMaxRangeGaps] = useState<number>(1000)
 
   // Handle data fetching
   useEffect(() => {
@@ -304,11 +307,11 @@ return (
                         </div>
                         <div className="flex flex-col gap-1 items-left">
                             <span className="text-sm font-medium text-gray-600">
-                                Max Range:
+                                Max Range Folls:
                             </span>
                             <select
-                                value={maxRange}
-                                onChange={(e) => setMaxRange(Number(e.target.value))}
+                                value={maxRangeFolls}
+                                onChange={(e) => setMaxRangeFolls(Number(e.target.value))}
                                 className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white
                                     focus:outline-none focus:ring-2 focus:ring-blue-500
                                     transition-all duration-150 shadow-sm"
@@ -319,13 +322,30 @@ return (
                                 <option value={4000}>4000</option>
                             </select>
                         </div>
+                        <div className="flex flex-col gap-1 items-left">
+                            <span className="text-sm font-medium text-gray-600">
+                                Max Range Gaps:
+                            </span>
+                            <select
+                                value={maxRangeGaps}
+                                onChange={(e) => setMaxRangeGaps(Number(e.target.value))}
+                                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white
+                                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                                    transition-all duration-150 shadow-sm"
+                                >
+                                <option value={500}>500</option>
+                                <option value={1000}>1000</option>
+                                <option value={1500}>1500</option>
+                                <option value={2000}>2000</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div className="flex flex-row gap-4 justify-center">
                     <BarChart
                         data={chartDataSource}
                         field="followers"
-                        maxRange={maxRange}
+                        maxRange={maxRangeFolls}
                         title="Followers Distribution"
                         bins={bins}
                         showData="accounts"
@@ -333,10 +353,26 @@ return (
                     <BarChart
                         data={chartDataSource}
                         field="following"
-                        maxRange={maxRange}
+                        maxRange={maxRangeFolls}
                         title="Following Distribution"
                         bins={bins}
                         showData="accounts"
+                    />
+                    <BarChart
+                        data={chartDataSource}
+                        field="gap"
+                        maxRange={maxRangeGaps}
+                        title="Gap Distribution"
+                        bins={bins}
+                        showData="accounts"
+                    />
+                </div>
+                <div className="flex justify-center">
+                    <ScatterChart
+                        title="Followers vs Following Scatter Plot"
+                        data={mapScatterFollowersFollowing(chartDataSource)}
+                        height={500}
+                        width={1200}
                     />
                 </div>
             </div>

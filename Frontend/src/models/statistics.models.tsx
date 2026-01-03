@@ -3,9 +3,10 @@ import type { InstaRelationalData } from "./table.models"
 export interface DistributionResult {
   label: string
   count: number
+  color?: string
 }
 
-export type NumericField = "followers" | "following"
+export type NumericField = "followers" | "following" | "gap"
 export type ShowDataMode = "accounts" | "total"
 
 export interface DistributionChartProps {
@@ -18,4 +19,18 @@ export interface DistributionChartProps {
   height?: number
   width?: number
   showData: ShowDataMode
+}
+
+// Scatter Chart Data Point
+export type ScatterPoint = {
+  x: number
+  y: number
+  username: string
+  gap: number
+}
+export type ScatterChartProps = {
+  data: ScatterPoint[]
+  title: string
+  height?: number
+  width?: number
 }

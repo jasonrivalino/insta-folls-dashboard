@@ -1,7 +1,7 @@
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend, type TooltipItem } from "chart.js"
 import { Bar } from "react-chartjs-2"
 import type { DistributionChartProps } from "../../models/statistics.models"
-import { distributeByField } from "../../services/dataVisualization/mainDashboard.services"
+import { distributeByField, distributeGap } from "../../services/dataVisualization/mainDashboard.services"
 
 ChartJS.register(
   CategoryScale,
@@ -17,24 +17,27 @@ export default function BarChart({
   title,
   bins = 4,
   maxRange = 4000,
-  color = "#3B82F6",
-  height = 350,
-  width = 580,
+  height = 250,
+  width = 380,
   showData
 }: DistributionChartProps) {
 
   // Get the distribution data
   const distribution = (() => {
     switch (showData) {
-      case "accounts":
-        return distributeByField(data, field, bins, maxRange)
+    case "accounts":
+        return field === "gap"
+          ? distributeGap(data, bins, maxRange)
+          : distributeByField(data, field, bins, maxRange)
 
       // Future extension example
       // case "total":
       //   return distributeTotalByField(data, field, bins, maxRange)
 
       default:
-        return distributeByField(data, field, bins, maxRange)
+        return field === "gap"
+          ? distributeGap(data, bins, maxRange)
+          : distributeByField(data, field, bins, maxRange)
     }
   })()
 
@@ -45,7 +48,7 @@ export default function BarChart({
       {
         label: title,
         data: distribution.map(d => d.count),
-        backgroundColor: color,
+        backgroundColor: distribution.map(d => d.color ?? "#3B82F6"),
         borderRadius: 8,
         borderWidth: 1
       }
@@ -110,7 +113,7 @@ export default function BarChart({
   }
 
   return (
-    <div className="bg-gray-50 rounded-xl pl-5 pr-7 pt-4 pb-12 shadow-md flex flex-col gap-2" style={{ height, width }}>
+    <div className="bg-gray-50 rounded-xl pl-3 pr-5 pt-3 pb-12 shadow-md flex flex-col gap-2" style={{ height, width }}>
       <h3 className="text-lg font-semibold text-center">{title}</h3>
       <Bar data={chartData} options={options} />
     </div>

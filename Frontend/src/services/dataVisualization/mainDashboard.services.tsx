@@ -1,6 +1,6 @@
 // services/dataVisualization/mainDashboard.services.ts
 import type { InstaRelationalData } from "../../models/table.models"
-import type { DistributionResult, NumericField } from "../../models/statistics.models"
+import type { DistributionResult, NumericField, ScatterPoint } from "../../models/statistics.models"
 
 // Function to distribute data by a numeric field into bins
 export function distributeByField(
@@ -42,4 +42,93 @@ export function distributeByField(
   })
 
   return distribution
+}
+
+// Distribute by gap customize color
+export function distributeGap(
+  data: InstaRelationalData[],
+  bins: number,
+  maxGap: number
+): DistributionResult[] {
+
+  const results: DistributionResult[] = []
+
+  const totalRange = maxGap * 2
+  const step = Math.floor(totalRange / bins)
+  const isOdd = bins % 2 === 1
+  const midIndex = Math.floor(bins / 2)
+
+  // Below range
+  results.push({
+    label: `<-${maxGap}`,
+    count: 0,
+    color: "#EF4444" // red
+  })
+
+  // Negative bins
+  for (let i = 0; i < bins; i++) {
+    const from = -maxGap + i * step
+    const to = from + step
+
+    let color = "#22C55E" // green
+    if (i < midIndex) color = "#EF4444" // red
+    if (isOdd && i === midIndex) color = "#3B82F6" // blue (neutral)
+
+    results.push({
+      label: `${from} – ${to}`,
+      count: 0,
+      color
+    })
+  }
+
+  // Above range
+  results.push({
+    label: `>${maxGap}`,
+    count: 0,
+    color: "#22C55E"
+  })
+
+  // Distribute data
+  data.forEach(item => {
+    const value = item.instagram_detail.gap
+
+    if (value < -maxGap) {
+      results[0].count++
+      return
+    }
+
+    if (value > maxGap) {
+      results[results.length - 1].count++
+      return
+    }
+
+    const index = Math.min(
+      Math.floor((value + maxGap) / step),
+      bins - 1
+    )
+
+    results[index + 1].count++
+  })
+
+  return results
+}
+
+// Map Scatter Plot Data
+export const mapScatterFollowersFollowing = (
+  data: InstaRelationalData[]
+): ScatterPoint[] => {
+  return data
+    .map(item => {
+      const d = item.instagram_detail
+
+      if (d.followers == null || d.following == null || d.username == null) return null
+
+      return {
+        x: d.following,
+        y: d.followers,
+        username: d.username,
+        gap: d.gap,
+      }
+    })
+    .filter((p): p is ScatterPoint => p !== null)
 }
