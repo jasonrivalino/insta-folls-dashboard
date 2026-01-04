@@ -139,6 +139,9 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
     const relationalIdParam = req.query.relational_id
     let relationalId: number | null = null
 
+    // Build where filter dynamically
+    const where: any = {}
+
     // Check relationalId if provided
     if (relationalIdParam !== undefined) {
       relationalId = Number(relationalIdParam)
@@ -147,6 +150,19 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
           success: false,
           message: 'relationalId must be a number'
         })
+      }
+
+      if (relationalId === 0) {
+        where.relations = {
+          none: {}
+        }
+      } else {
+        // Normal relational filter
+        where.relations = {
+          some: {
+            id: relationalId
+          }
+        }
       }
     }
 
@@ -191,9 +207,6 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       orderBy.push({ id: 'asc' })
     }
 
-    // Build where filter dynamically
-    const where: any = {}
-
     if (instaUserId) {
       where.id = instaUserId
     }
@@ -233,14 +246,11 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       }
     }
 
-    const relationsInclude = relationalId
-    ? {
-        where: { id: relationalId },
-        orderBy: { id: 'asc' as const }
-      }
-    : {
-        orderBy: { id: 'asc' as const }
-      }
+    const relationsInclude = relationalId === 0
+      ? { orderBy: { id: 'asc' as const } }
+      : relationalId
+      ? { where: { id: relationalId }, orderBy: { id: 'asc' as const } }
+      : { orderBy: { id: 'asc' as const } }
 
     // Fetch data from database with sorting and filtering
     const queryOptions: any = {

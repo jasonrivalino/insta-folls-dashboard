@@ -369,6 +369,7 @@ export default function InstagramUserList() {
                   {rel.relational}
                 </option>
               ))}
+              <option value="0">No Relation</option>
             </select>
           </div>
           {/* Download Data */}
