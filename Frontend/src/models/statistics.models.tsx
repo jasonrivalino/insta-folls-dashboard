@@ -27,6 +27,7 @@ export type ScatterPoint = {
   y: number
   username: string
   gap: number
+  is_outlier: boolean
 }
 export type ScatterChartProps = {
   data: ScatterPoint[]

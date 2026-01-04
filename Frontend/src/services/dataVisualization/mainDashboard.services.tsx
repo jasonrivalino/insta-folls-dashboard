@@ -117,11 +117,15 @@ export function distributeGap(
 export const mapScatterFollowersFollowing = (
   data: InstaRelationalData[]
 ): ScatterPoint[] => {
-  return data
+
+  const validData = data
     .map(item => {
       const d = item.instagram_detail
-
-      if (d.followers == null || d.following == null || d.username == null) return null
+      if (
+        d.followers == null ||
+        d.following == null ||
+        d.username == null
+      ) return null
 
       return {
         x: d.following,
@@ -131,4 +135,50 @@ export const mapScatterFollowersFollowing = (
       }
     })
     .filter((p): p is ScatterPoint => p !== null)
+
+  // Collect axis values
+  const followersValues = validData.map(d => d.y)
+  const followingValues = validData.map(d => d.x)
+
+  // Compute bounds
+  const followersBounds = getIQRBounds(followersValues)
+  const followingBounds = getIQRBounds(followingValues)
+
+  // Mark outliers
+  return validData.map(point => {
+    const isFollowersOutlier =
+      point.y < followersBounds.lower ||
+      point.y > followersBounds.upper
+
+    const isFollowingOutlier =
+      point.x < followingBounds.lower ||
+      point.x > followingBounds.upper
+
+    return {
+      ...point,
+      is_outlier: isFollowersOutlier || isFollowingOutlier,
+    }
+  })
+}
+
+const getQuantile = (arr: number[], q: number) => {
+  const sorted = [...arr].sort((a, b) => a - b)
+  const pos = (sorted.length - 1) * q
+  const base = Math.floor(pos)
+  const rest = pos - base
+
+  if (sorted[base + 1] !== undefined) {
+    return sorted[base] + rest * (sorted[base + 1] - sorted[base])
+  }
+  return sorted[base]
+}
+const getIQRBounds = (values: number[]) => {
+  const q1 = getQuantile(values, 0.25)
+  const q3 = getQuantile(values, 0.75)
+  const iqr = q3 - q1
+
+  return {
+    lower: q1 - 1.5 * iqr,
+    upper: q3 + 1.5 * iqr,
+  }
 }

@@ -25,7 +25,7 @@ export default function MainDashboard() {
   const [chartDataSource, setChartDataSource] = useState<InstaRelationalData[]>([])
   const [bins, setBins] = useState<number>(4)
   const [maxRangeFolls, setMaxRangeFolls] = useState<number>(2000)
-  const [maxRangeGaps, setMaxRangeGaps] = useState<number>(1000)
+  const [maxRangeGaps, setMaxRangeGaps] = useState<number>(250)
 
   // Handle data fetching
   useEffect(() => {
@@ -333,6 +333,8 @@ return (
                                     focus:outline-none focus:ring-2 focus:ring-blue-500
                                     transition-all duration-150 shadow-sm"
                                 >
+                                <option value={100}>125</option>
+                                <option value={250}>250</option>
                                 <option value={500}>500</option>
                                 <option value={1000}>1000</option>
                                 <option value={1500}>1500</option>
@@ -371,8 +373,8 @@ return (
                     <ScatterChart
                         title="Followers vs Following Scatter Plot"
                         data={mapScatterFollowersFollowing(chartDataSource)}
-                        height={500}
-                        width={1200}
+                        height={584}
+                        width={1168}
                     />
                 </div>
             </div>
