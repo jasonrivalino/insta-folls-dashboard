@@ -1,11 +1,11 @@
 // services/dataVisualization/mainDashboard.services.ts
 import type { InstaRelationalData } from "../../models/table.models"
-import type { DistributionResult, NumericField, ScatterPoint } from "../../models/statistics.models"
+import type { DistributionResult, NumericBarField, NumericPieField, PieSlice, ScatterPoint } from "../../models/statistics.models"
 
 // Function to distribute data by a numeric field into bins
 export function distributeByField(
   data: InstaRelationalData[],
-  field: NumericField,
+  field: NumericBarField,
   bins: number = 4,
   maxRange: number = 4000
 ): DistributionResult[] {
@@ -113,6 +113,7 @@ export function distributeGap(
   return results
 }
 
+
 // Map Scatter Plot Data
 export const mapScatterFollowersFollowing = (
   data: InstaRelationalData[]
@@ -181,4 +182,32 @@ const getIQRBounds = (values: number[]) => {
     lower: q1 - 1.5 * iqr,
     upper: q3 + 1.5 * iqr,
   }
+}
+
+// Map Pie Chart Data
+export const mapPieData = (
+  data: InstaRelationalData[],
+  field: NumericPieField
+): PieSlice[] => {
+  let trueCount = 0
+  let falseCount = 0
+
+  data.forEach((item) => {
+    const value = item.instagram_detail[field]
+
+    if (value === true) trueCount++
+    else falseCount++
+  })
+
+  const labelMap: Record<NumericPieField, [string, string]> = {
+    is_private: ["Private", "Public"],
+    is_mutual: ["Mutual", "Non-Mutual"],
+  }
+
+  const [trueLabel, falseLabel] = labelMap[field]
+
+  return [
+    { label: trueLabel, value: trueCount },
+    { label: falseLabel, value: falseCount },
+  ]
 }

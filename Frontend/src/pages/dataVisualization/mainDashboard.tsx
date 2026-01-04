@@ -5,7 +5,7 @@ import { getRelationalDetails } from "../../services/settings/changeInstaInfo.se
 
 import BarChart from "../../components/graph/barChart"
 import ScatterChart from "../../components/graph/scatterPlot"
-import { mapScatterFollowersFollowing } from "../../services/dataVisualization/mainDashboard.services"
+import PieChart from "../../components/graph/pieChart"
 
 export default function MainDashboard() {
   const [stats, setStats] = useState<GeneralStatistics | null>(null)
@@ -350,7 +350,6 @@ return (
                         maxRange={maxRangeFolls}
                         title="Followers Distribution"
                         bins={bins}
-                        showData="accounts"
                     />
                     <BarChart
                         data={chartDataSource}
@@ -358,7 +357,6 @@ return (
                         maxRange={maxRangeFolls}
                         title="Following Distribution"
                         bins={bins}
-                        showData="accounts"
                     />
                     <BarChart
                         data={chartDataSource}
@@ -366,15 +364,37 @@ return (
                         maxRange={maxRangeGaps}
                         title="Gap Distribution"
                         bins={bins}
-                        showData="accounts"
                     />
                 </div>
                 <div className="flex justify-center">
                     <ScatterChart
                         title="Followers vs Following Scatter Plot"
-                        data={mapScatterFollowersFollowing(chartDataSource)}
+                        data={chartDataSource}
                         height={584}
                         width={1168}
+                    />
+                </div>
+            </div>
+            {/* Private Mutual Pie Chart */}
+            <div className="flex flex-col gap-4 bg-gray-200 p-4 rounded-xl shadow-md">
+                <div className="flex flex-row justify-between items-center">
+                    <div className="flex flex-col gap-0.5">
+                        <h2 className="text-xl font-semibold">Private & Mutual Insta Distribution</h2>
+                        <p className="text-sm text-gray-600">Distribution of private and mutual among the Instagram accounts.</p>
+                    </div>
+                </div>
+                <div className="flex flex-row gap-4 justify-center">
+                    <PieChart
+                        title="Private vs Public Accounts"
+                        data={chartDataSource}
+                        field="is_private"
+                        colorMode="default"
+                    />
+                    <PieChart
+                        title="Mutual vs Non-Mutual Accounts"
+                        data={chartDataSource}
+                        field="is_mutual"
+                        colorMode="reverse"
                     />
                 </div>
             </div>

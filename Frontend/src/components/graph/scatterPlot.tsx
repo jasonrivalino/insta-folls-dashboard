@@ -4,6 +4,7 @@ import zoomPlugin from "chartjs-plugin-zoom"
 import type { ScatterChartProps, ScatterPoint } from "../../models/statistics.models"
 import { useMainAccount } from "../../context/useMainAccount"
 import { useMemo, useRef, useState } from "react"
+import { mapScatterFollowersFollowing } from "../../services/dataVisualization/mainDashboard.services"
 
 ChartJS.register(
   LinearScale,
@@ -17,21 +18,27 @@ ChartJS.register(
 export default function ScatterChart({
   data,
   title,
-  height = 500,
-  width = 1000,
+  height = 584,
+  width = 1168,
 }: ScatterChartProps) {
+
+  // Mapped Distribution Data
+  const distribution = useMemo<ScatterPoint[]>(() => {
+    return mapScatterFollowersFollowing(data)
+  }, [data])
 
   const chartRef = useRef<ChartJS | null>(null)
   const { account } = useMainAccount()
+  const [enableZoom, setEnableZoom] = useState(false)
 
   const [showOutlier, setShowOutlier] = useState(false)
   const [removeOutlier, setRemoveOutlier] = useState(false)
 
   // Filtered Data
   const filteredData = useMemo(() => {
-    if (!removeOutlier) return data
-    return data.filter(d => !d.is_outlier)
-  }, [data, removeOutlier])
+    if (!removeOutlier) return distribution
+    return distribution.filter(d => !d.is_outlier)
+  }, [distribution, removeOutlier])
 
   // Compute Max Value for Axis Scaling
   const roundUpNice = (value: number) => {
@@ -118,25 +125,25 @@ export default function ScatterChart({
           y: { min: 0 },
         },
         pan: {
-          enabled: true,
+          enabled: enableZoom,
           mode: "xy",
         },
         zoom: {
-          wheel: { enabled: true },
-          pinch: { enabled: true },
+          wheel: { enabled: enableZoom },
+          pinch: { enabled: enableZoom },
           mode: "xy",
         },
       },
       tooltip: {
         filter: (ctx) => ctx.dataset.label !== "x = y",
         callbacks: {
-            label: (ctx: TooltipItem<"scatter" | "line">) => {
+          label: (ctx: TooltipItem<"scatter" | "line">) => {
             const raw = ctx.raw as ScatterPoint
             return [
-                `@${raw.username ?? "-"}`,
-                `Followers: ${raw.y}`,
-                `Following: ${raw.x}`,
-                `Gap: ${raw.gap}`,
+              `@${raw.username ?? "-"}`,
+              `Followers: ${raw.y}`,
+              `Following: ${raw.x}`,
+              `Gap: ${raw.gap}`,
             ]
           },
         },
@@ -159,8 +166,24 @@ export default function ScatterChart({
   return (
     <div className="bg-gray-50 rounded-xl pl-4 pr-5 pt-4 pb-12 shadow-md flex flex-col space-y-2" style={{ height, width }}>
         <div className="grid grid-cols-3 items-end">
-          {/* Left spacer (keeps title centered) */}
-          <div />
+          {/* Left spacer */}
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1 text-sm cursor-pointer bg-gray-300 rounded shadow-sm px-3 py-1">
+              <input
+                type="checkbox"
+                checked={enableZoom}
+                onChange={(e) => setEnableZoom(e.target.checked)}
+                className="accent-blue-500"
+              />
+              Zoom
+            </label>
+            <button
+              className="bg-blue-500 text-white text-sm px-3 py-1 rounded hover:bg-blue-600 transition"
+              onClick={() => chartRef.current?.resetZoom()}
+            >
+              Reset Zoom
+            </button>
+          </div>
 
           {/* Center title */}
           <h3 className="text-lg font-semibold text-center">
@@ -169,13 +192,6 @@ export default function ScatterChart({
 
           {/* Right actions */}
           <div className="flex justify-end items-center gap-3">
-            <button
-              className="bg-blue-500 text-white text-sm px-3 py-1 rounded hover:bg-blue-600 transition"
-              onClick={() => chartRef.current?.resetZoom()}
-            >
-              Reset Zoom
-            </button>
-
             <div className="flex flex-row bg-gray-300 rounded shadow-sm px-3 py-1 gap-4">
               <label className="flex items-center gap-1 text-sm cursor-pointer">
                 <input

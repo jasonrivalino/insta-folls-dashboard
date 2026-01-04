@@ -1,24 +1,20 @@
-import type { InstaRelationalData } from "./table.models"
+import type { InstagramUser, InstaRelationalData } from "./table.models"
 
+// Bar Chart Distribution Data
 export interface DistributionResult {
   label: string
   count: number
   color?: string
 }
-
-export type NumericField = "followers" | "following" | "gap"
-export type ShowDataMode = "accounts" | "total"
-
+export type NumericBarField = "followers" | "following" | "gap"
 export interface DistributionChartProps {
   data: InstaRelationalData[]
-  field: NumericField
+  field: NumericBarField
   title: string
   bins?: number
   maxRange?: number
-  color?: string
   height?: number
   width?: number
-  showData: ShowDataMode
 }
 
 // Scatter Chart Data Point
@@ -30,8 +26,27 @@ export type ScatterPoint = {
   is_outlier: boolean
 }
 export type ScatterChartProps = {
-  data: ScatterPoint[]
+  data: InstaRelationalData[]
   title: string
   height?: number
   width?: number
+}
+
+// Pie Chart Data
+export type NumericPieField = keyof Pick<
+  InstagramUser,
+  "is_private" | "is_mutual"
+>
+export type PieColorMode = "default" | "reverse"
+export type PieSlice = {
+  label: string
+  value: number
+}
+export type PieChartProps = {
+  data: InstaRelationalData[]
+  field: NumericPieField
+  title: string
+  height?: number
+  width?: number
+  colorMode: PieColorMode
 }

@@ -19,26 +19,13 @@ export default function BarChart({
   maxRange = 4000,
   height = 250,
   width = 380,
-  showData
 }: DistributionChartProps) {
 
   // Get the distribution data
   const distribution = (() => {
-    switch (showData) {
-    case "accounts":
-        return field === "gap"
-          ? distributeGap(data, bins, maxRange)
-          : distributeByField(data, field, bins, maxRange)
-
-      // Future extension example
-      // case "total":
-      //   return distributeTotalByField(data, field, bins, maxRange)
-
-      default:
-        return field === "gap"
-          ? distributeGap(data, bins, maxRange)
-          : distributeByField(data, field, bins, maxRange)
-    }
+    return field === "gap"
+      ? distributeGap(data, bins, maxRange)
+      : distributeByField(data, field, bins, maxRange)
   })()
 
   // Prepare chart data
