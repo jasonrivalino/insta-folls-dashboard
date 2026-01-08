@@ -72,19 +72,12 @@ for i, pk in enumerate(mutual_pks, start=1):
         def empty_to_none(value):
             return value if value != "" else None
         
-        # Convert URL fields to string or None
-        def url_to_str(value):
-            if value is None:
-                return None
-            return str(value)
-        
         # Append to mutual list
         mutual_list.append({
             "id": i,
             "pk": empty_to_none(user.pk),
             "username": empty_to_none(user.username),
             "full_name": empty_to_none(user.full_name),
-            "profile_pic_url_hd": url_to_str(empty_to_none(user.profile_pic_url_hd)),
             "is_private": empty_to_none(user.is_private),
             "media_count": empty_to_none(user.media_count),
             "follower_count": empty_to_none(user.follower_count),

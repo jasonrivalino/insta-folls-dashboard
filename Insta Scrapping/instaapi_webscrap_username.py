@@ -51,18 +51,25 @@ for target_username in target_usernames:
             try:
                 user = cl.user_info_v1(pk)
 
+                # Print user fetched and data collected for debugging
+                # print(f"Fetched data for {user.username}:")
+                # print(user.model_dump())
+
+                # Handle empty strings to None
+                def empty_to_none(value):
+                    return value if value != "" else None
+                
+                # Append to mutual list
                 mutual_list.append({
                     "id": global_index,
-                    "target_username": target_username,
-                    "pk": user.pk,
-                    "username": user.username,
-                    "full_name": user.full_name or None,
-                    "profile_pic_url_hd": str(user.profile_pic_url_hd) if user.profile_pic_url_hd else None,
-                    "is_private": user.is_private,
-                    "media_count": user.media_count,
-                    "follower_count": user.follower_count,
-                    "following_count": user.following_count,
-                    "biography": user.biography or None,
+                    "pk": empty_to_none(user.pk),
+                    "username": empty_to_none(user.username),
+                    "full_name": empty_to_none(user.full_name),
+                    "is_private": empty_to_none(user.is_private),
+                    "media_count": empty_to_none(user.media_count),
+                    "follower_count": empty_to_none(user.follower_count),
+                    "following_count": empty_to_none(user.following_count),
+                    "biography": empty_to_none(user.biography),
                 })
 
                 print(f"[{global_index}] OK → {user.username}")
