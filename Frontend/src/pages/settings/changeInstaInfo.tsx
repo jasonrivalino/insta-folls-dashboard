@@ -58,6 +58,9 @@ export default function ChangeInstaInfo() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  // Relational Filter State
+  const [selectedRelationalIdFilter, setSelectedRelationalIdFilter] = useState<number | null>(null);
+
   // Form mode state
   const [formMode, setFormMode] = useState<FormMode>("idle");
   // Add / Edit form state
@@ -86,6 +89,19 @@ export default function ChangeInstaInfo() {
   const [actionSuccess, setActionSuccess] = useState<boolean | null>(null);
   const [resultMessage, setResultMessage] = useState<string>("");
 
+  // Fetch relational data on component mount
+  useEffect(() => {
+    const loadRelationalData = async () => {
+      try {
+        const res = await getRelationalDetails();
+        setRelationalList(res.data);
+      } catch (error) {
+        console.error("Failed to load relational data:", error);
+      }
+    };
+    loadRelationalData();
+  }, []);
+
   // Fetch users on component mount and when isPrivate changes
   useEffect(() => {
     const fetchUsers = async () => {
@@ -94,6 +110,7 @@ export default function ChangeInstaInfo() {
           sortBy: sort.key ?? undefined,
           order: sort.order ?? undefined,
           search: searchQuery || undefined,
+          relational_id: selectedRelationalIdFilter ?? undefined,
         });
 
         if (data) {
@@ -106,7 +123,7 @@ export default function ChangeInstaInfo() {
       }
     };
     fetchUsers();
-  }, [sort.key, sort.order, searchQuery]);
+  }, [sort.key, sort.order, searchQuery, selectedRelationalIdFilter]);
 
   // Handle sorting logic
   const handleSortClick = (key: InstagramSortKey) => {
@@ -141,7 +158,6 @@ export default function ChangeInstaInfo() {
   const handleAddEditClick = async (
     mode: FormMode,
     userId?: number,
-    relations: RelationalDetail[] = []
   ) => {
     setFormMode(mode);
 
@@ -175,6 +191,7 @@ export default function ChangeInstaInfo() {
     if (!result) return;
 
     const user = result.instagram_detail;
+    const relations = result.relational_detail;
 
     setFormData({
       pk_def_insta: user.pk_def_insta,
@@ -218,6 +235,7 @@ export default function ChangeInstaInfo() {
         sortBy: sort.key ?? undefined,
         order: sort.order ?? undefined,
         search: searchQuery || undefined,
+        relational_id: selectedRelationalIdFilter ?? undefined,
       });
       if (data) {
         setUsers(data.data);
@@ -279,6 +297,7 @@ export default function ChangeInstaInfo() {
         sortBy: sort.key ?? undefined,
         order: sort.order ?? undefined,
         search: searchQuery || undefined,
+        relational_id: selectedRelationalIdFilter ?? undefined,
       });
       if (data) {
         setUsers(data.data);
@@ -342,6 +361,28 @@ export default function ChangeInstaInfo() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-gray-700">Relational</span>
+            <select
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-blue-500
+                        transition-all duration-150 shadow-sm bg-white"
+                value={selectedRelationalIdFilter ?? "all"}
+                onChange={(e) =>
+                  setSelectedRelationalIdFilter(
+                    e.target.value === "all" ? null : Number(e.target.value)
+                  )
+                }
+              >
+              <option value="all">All</option>
+              {relationalList.map((rel) => (
+                <option key={rel.id} value={rel.id}>
+                  {rel.relational}
+                </option>
+              ))}
+              <option value="0">No Relation</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Add New User</span>
             <div onClick={() => handleAddEditClick("add")}
               className="px-2.5 py-[0.2325rem] bg-blue-500 text-white rounded-lg flex items-center gap-2 cursor-pointer"
@@ -383,8 +424,6 @@ export default function ChangeInstaInfo() {
                 ) : (
                     users.map((userData, index) => {
                       const user = userData.instagram_detail;
-                      const relations = userData.relational_detail;
-
                     return (
                       <tr
                         key={user.id}
@@ -420,7 +459,7 @@ export default function ChangeInstaInfo() {
                                   <button
                                     className="p-1 rounded border-2 border-gray-300 bg-blue-50 hover:bg-blue-100 text-blue-500 hover:text-blue-700 font-semibold shadow-sm cursor-pointer"
                                     title="Edit"
-                                    onClick={() => handleAddEditClick("edit", user.id, relations)}
+                                    onClick={() => handleAddEditClick("edit", user.id)}
                                   >
                                     <FiEdit2 size={18} />
                                   </button>

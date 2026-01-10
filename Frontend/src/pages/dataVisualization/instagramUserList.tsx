@@ -430,7 +430,7 @@ export default function InstagramUserList() {
 
       {/* Table */}
       <div className="relative overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-white">
-        <div className="overflow-x-auto max-h-[75.9vh]">
+        <div className="overflow-x-auto max-h-[75.5vh]">
           <table className="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead className="bg-gray-100 sticky top-0 z-20 shadow-sm">
               <tr>
@@ -537,8 +537,16 @@ export default function InstagramUserList() {
                       <td className={tdClass}>{mutualBadge(user.is_mutual)}</td>
 
                       <td className={tdClass}>
-                        {userData.relational_detail.length > 0
-                          ? userData.relational_detail.map(r => (
+                        {(() => {
+                          const filteredRelations =
+                            selectedRelationalId === null
+                              ? userData.relational_detail
+                              : userData.relational_detail.filter(
+                                  r => r.id === selectedRelationalId
+                                );
+
+                          return filteredRelations.length > 0 ? (
+                            filteredRelations.map(r => (
                               <span
                                 key={r.id}
                                 className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mr-1"
@@ -550,7 +558,10 @@ export default function InstagramUserList() {
                                 {r.relational}
                               </span>
                             ))
-                          : "-"}
+                          ) : (
+                            "-"
+                          );
+                        })()}
                       </td>
                     </tr>
                   );
