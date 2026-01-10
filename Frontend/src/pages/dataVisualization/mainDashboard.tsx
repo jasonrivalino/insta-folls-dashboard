@@ -6,6 +6,7 @@ import { getRelationalDetails } from "../../services/settings/changeInstaInfo.se
 import BarChart from "../../components/graph/barChart"
 import ScatterChart from "../../components/graph/scatterPlot"
 import PieChart from "../../components/graph/pieChart"
+import RelationalComparisonPage from "./relationalMultipleBar"
 
 export default function MainDashboard() {
   const [stats, setStats] = useState<GeneralStatistics | null>(null)
@@ -397,6 +398,9 @@ return (
                         colorMode="reverse"
                     />
                 </div>
+            </div>
+            <div className="flex flex-col gap-4 bg-gray-200 p-4 rounded-xl shadow-md">
+                <RelationalComparisonPage />
             </div>
         </div>
     </div>
