@@ -1,0 +1,24 @@
+[
+    {
+        "id": 1,
+        "pk": "895134",
+        "username": "lorem_ipsum",
+        "full_name": "dawn",
+        "is_private": true,
+        "media_count": 23,
+        "follower_count": 44,
+        "following_count": 92,
+        "biography": null
+    },
+    {
+        "id": 2,
+        "pk": "7408238132",
+        "username": "dolor_sit_amet",
+        "full_name": "Lorene Ipsum",
+        "is_private": true,
+        "media_count": 3,
+        "follower_count": 0,
+        "following_count": 0,
+        "biography": null
+    }
+]
