@@ -1,4 +1,16 @@
-# React + TypeScript + Vite
+# Running Frontend Side
+1. Run ```npm install``` first to install all dependencies
+2. Make ```.env``` file for setup environment<br>
+   ```js
+   # Default: localhost:3000
+   VITE_BACKEND_URL=YOUR_BACKEND_URL_HERE
+   ```
+   Note: Ensure the backend server is running before starting the frontend
+3. Run Frontend Server by ```npm run dev```
+4. Enjoy using the application 😁!
+<br><br>
+
+# React + TypeScript + Vite (Official Documentation)
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
