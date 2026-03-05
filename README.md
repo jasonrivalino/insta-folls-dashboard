@@ -61,7 +61,7 @@ Made for one of my Project Portfolio...
    - Python
    - Instagrapi Library
    - Pandas Library
-   - SQLAlchhemy Library
+   - SQLAlchemy Library
 
 
 ## Requirements
