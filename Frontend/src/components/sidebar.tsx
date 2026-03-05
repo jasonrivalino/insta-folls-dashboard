@@ -17,7 +17,7 @@ export default function Sidebar() {
     <aside className="w-1/6 bg-[#23476A] shadow-md shadow-[#23476A] h-screen flex flex-col rounded-r-2xl gap-4 z-30 hover:shadow-lg transition-shadow hover:z-40">
       <div className="flex flex-col items-center gap-2.5 border-b-2 border-white p-4">
         <h1 className="font-bold text-2xl text-white text-center">Instagram Dashboard Analytics</h1>
-        <h3 className="text-base text-gray-900 px-2 py-0.5 bg-white rounded font-medium">Main Acc: @{account?.username ?? 'loading...'}</h3> 
+        <h3 className="text-base text-gray-900 px-2 py-0.5 bg-white rounded font-medium text-center">Main Acc: @{account?.username ?? 'loading...'}</h3> 
       </div>
       
       <nav className="flex-1 space-y-1.5 pl-2.5 pr-3">

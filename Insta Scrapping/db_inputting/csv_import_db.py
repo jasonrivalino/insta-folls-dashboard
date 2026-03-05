@@ -49,7 +49,7 @@ required_columns = [
 df = df[required_columns]
 
 # Add is_mutual column to set its value to True (indicating mutual followers)
-df["is_mutual"] = True
+df["is_mutual"] = False
 df["last_update"] = pd.Timestamp.now().floor("s")
 
 # Change data types if necessary
