@@ -4,6 +4,8 @@ import csv
 import requests
 from openpyxl import Workbook
 from dotenv import load_dotenv
+import time
+import random
 
 load_dotenv()
 
@@ -37,6 +39,11 @@ for idx, username in enumerate(usernames, start=1):
         )
 
         print(f"Fetching [{idx}/{len(usernames)}]: {username} -> {res.status_code}")
+        
+        if res.status_code == 429:
+            print("Rate limited, waiting 30 seconds before retrying...")
+            time.sleep(30)
+            continue
 
         if res.status_code == 200:
             data = res.json()
@@ -58,11 +65,13 @@ for idx, username in enumerate(usernames, start=1):
             valid_id += 1
 
         elif res.status_code == 404:
-            print(f"Username '{username}' tidak ditemukan (404). Skipped.")
+            print(f"Username '{username}' not found (404). Skipped.")
             continue
 
         else:
-            print(f"Gagal fetch {username} -> {res.status_code}")
+            print(f"Failed to fetch {username} -> {res.status_code}")
+            
+        time.sleep(random.uniform(8, 15))  # Delay between requests
 
     except Exception as e:
         print(f"Error fetching {username}: {str(e)}")
