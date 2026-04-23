@@ -6,7 +6,7 @@ type Props = {
   index: number
 }
 
-export default function MultipleBarDropdown({
+export default function MultipleGraphDropdown({
   relationalList,
   onSelect,
   index

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import type { RelationalDetail } from "../../models/table.models"
 import { getRelationalDetails } from "../../services/settings/changeInstaInfo.services"
-import RelationalComparisonBlock from "../../components/graph/multipleBar/multipleBarBlock"
+import MultipleGraphBlock from "../../components/graph/multipleBar/multipleGraphBlock"
 
 export default function RelationalComparisonPage() {
   const [relationalList, setRelationalList] = useState<RelationalDetail[]>([])
@@ -54,9 +54,9 @@ export default function RelationalComparisonPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-rows-3 gap-3">
         {[0, 1, 2].map(index => (
-          <RelationalComparisonBlock
+          <MultipleGraphBlock
             key={index}
             index={index}
             relationalList={relationalList}

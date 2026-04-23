@@ -15,7 +15,7 @@ type Props = {
   statistics: GeneralStatistics
 }
 
-export default function MultipleBarChart({
+export default function MultipleChartBar({
   relational,
   statistics
 }: Props) {
@@ -68,5 +68,17 @@ export default function MultipleBarChart({
     }
   }
 
-  return <Bar data={data} options={options} height={200}/>
+  return (
+    <div className="flex flex-col items-center w-full">
+      <h3 className="text-base font-medium text-center mb-4">
+        {relational.relational} (Average Data)
+      </h3>
+
+      <Bar
+        data={data}
+        options={options}
+        height={200}
+      />
+    </div>
+  )
 }

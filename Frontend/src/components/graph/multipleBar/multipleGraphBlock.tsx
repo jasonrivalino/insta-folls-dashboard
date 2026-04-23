@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react"
-import type { RelationalDetail, GeneralStatistics } from "../../../models/table.models"
+import type { RelationalDetail, GeneralStatistics, InstaRelationalData } from "../../../models/table.models"
 import { getInstagramUsers } from "../../../services/dataVisualization/instaUserList.services"
-import MultipleBarDropdown from "./multipleBarDropdown"
-import MultipleBarChart from "./multipleBarChart"
+import MultipleGraphDropdown from "./multipleGraphDropdown"
+import MultipleChartBar from "./multipleChartBar"
+import MultiplePieChart from "./multipleChartPie"
 
 type Props = {
   relationalList: RelationalDetail[]
@@ -10,13 +11,14 @@ type Props = {
   isMutual?: boolean
 }
 
-export default function MultipleBarBlock({
+export default function MultipleGraphBlock({
   relationalList,
   index,
   isMutual
 }: Props) {
   const [selectedRelational, setSelectedRelational] = useState<RelationalDetail | null>(null)
   const [statistics, setStatistics] = useState<GeneralStatistics | null>(null)
+  const [rawData, setRawData] = useState<InstaRelationalData[]>([])
   const prevIsMutualRef = useRef<boolean | undefined>(isMutual)
 
   // Fetch statistics based on selected relational and mutual filter
@@ -30,6 +32,7 @@ export default function MultipleBarBlock({
     })
     if (!response) return
     setStatistics(response.general_statistics)
+    setRawData(response.data)
   }
 
   // Handle relational selection
@@ -56,7 +59,7 @@ export default function MultipleBarBlock({
 
   return (
     <div className="rounded-lg p-3 shadow-sm bg-white min-h-88 flex flex-col gap-2.5">
-      <MultipleBarDropdown
+      <MultipleGraphDropdown
         index={index}
         relationalList={relationalList}
         onSelect={handleSelect}
@@ -73,11 +76,20 @@ export default function MultipleBarBlock({
 
       <div className="flex-1 flex items-center justify-center border border-dashed rounded-md">
         {selectedRelational && statistics ? (
-          <div className="pt-3.5 pl-3 pr-4 w-full h-full">
-            <MultipleBarChart
+          <div className="p-3.5 w-full h-full flex flex-row gap-3">
+            {/* Set Multiple Bar Chart */}
+            <div className="flex-1">
+              <MultipleChartBar
                 relational={selectedRelational}
                 statistics={statistics}
-            />
+              />
+            </div>
+            <div className="flex-2">
+              <MultiplePieChart
+                relational={selectedRelational}
+                data={rawData}
+              />
+            </div>
           </div>
         ) : (
           <EmptyPlaceholder />
