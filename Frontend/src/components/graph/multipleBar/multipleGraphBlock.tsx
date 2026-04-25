@@ -76,7 +76,7 @@ export default function MultipleGraphBlock({
 
       <div className="flex-1 flex items-center justify-center border border-dashed rounded-md">
         {selectedRelational && statistics ? (
-          <div className="p-3.5 w-full h-full flex flex-row gap-3">
+          <div className="p-3.5 w-full h-full flex flex-col gap-6">
             {/* Set Multiple Bar Chart */}
             <div className="flex-1">
               <MultipleChartBar

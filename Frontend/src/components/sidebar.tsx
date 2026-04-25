@@ -35,6 +35,9 @@ export default function Sidebar() {
               <NavLink to="/" className={menuItemClass}>
                 Main Dashboard
               </NavLink>
+              <NavLink to="/relational-comparison" className={menuItemClass}>
+                Relational Comparison
+              </NavLink>
               <NavLink to="/instagram-users-list" className={menuItemClass}>
                 Instagram User List
               </NavLink>

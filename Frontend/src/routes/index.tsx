@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import DashboardLayout from '../DashboardLayout'
 import MainDashboard from '../pages/dataVisualization/mainDashboard'
+import RelationalComparisonPage from '../pages/dataVisualization/relationalMultipleBar'
 import InstagramUserList from '../pages/dataVisualization/instagramUserList'
 import RelationalList from '../pages/settings/relationalList'
 import ChangeInstaInfo from '../pages/settings/changeInstaInfo'
@@ -13,6 +14,7 @@ export default function AppRoutes() {
       <Route element={<DashboardLayout />}>
         {/* Data Visualization Routes */}
         <Route path="/" element={<MainDashboard />} />
+        <Route path="/relational-comparison" element={<RelationalComparisonPage />} />
         <Route path="/instagram-users-list" element={<InstagramUserList />} />
 
         {/* Settings Routes */}

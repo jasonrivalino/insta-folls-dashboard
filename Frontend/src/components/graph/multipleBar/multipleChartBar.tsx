@@ -70,14 +70,14 @@ export default function MultipleChartBar({
 
   return (
     <div className="flex flex-col items-center w-full">
-      <h3 className="text-base font-medium text-center mb-4">
+      <h3 className="text-base font-medium text-center mb-3">
         {relational.relational} (Average Data)
       </h3>
 
       <Bar
         data={data}
         options={options}
-        height={200}
+        height={210}
       />
     </div>
   )

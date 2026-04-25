@@ -537,31 +537,33 @@ export default function InstagramUserList() {
                       <td className={tdClass}>{mutualBadge(user.is_mutual)}</td>
 
                       <td className={tdClass}>
-                        {(() => {
-                          const filteredRelations =
-                            selectedRelationalId === null
-                              ? userData.relational_detail
-                              : userData.relational_detail.filter(
-                                  r => r.id === selectedRelationalId
-                                );
+                        <div className="flex flex-wrap justify-center gap-1.5 mx-auto">
+                          {(() => {
+                            const filteredRelations =
+                              selectedRelationalId === null
+                                ? userData.relational_detail
+                                : userData.relational_detail.filter(
+                                    r => r.id === selectedRelationalId
+                                  );
 
-                          return filteredRelations.length > 0 ? (
-                            filteredRelations.map(r => (
-                              <span
-                                key={r.id}
-                                className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mr-1"
-                                style={{
-                                  backgroundColor: r.bg_color,
-                                  color: r.text_color,
-                                }}
-                              >
-                                {r.relational}
-                              </span>
-                            ))
-                          ) : (
-                            "-"
-                          );
-                        })()}
+                            return filteredRelations.length > 0 ? (
+                              filteredRelations.map(r => (
+                                <span
+                                  key={r.id}
+                                  className="px-2 py-0.5 rounded-full text-xs font-medium"
+                                  style={{
+                                    backgroundColor: r.bg_color,
+                                    color: r.text_color,
+                                  }}
+                                >
+                                  {r.relational}
+                                </span>
+                              ))
+                            ) : (
+                              "-"
+                            );
+                          })()}
+                        </div>
                       </td>
                     </tr>
                   );

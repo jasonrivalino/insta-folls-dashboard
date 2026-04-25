@@ -130,13 +130,13 @@ export default function MultiplePieChart({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 w-full">
+    <div className="grid grid-rows-2 gap-6 w-full">
       {/* Private */}
       <div className="flex flex-col items-center">
         <h3 className="text-base font-medium text-center mb-3">
           {relational.relational} (Private vs Public)
         </h3>
-        <div className="w-72 h-72">
+        <div className="w-68 h-68">
             <Pie
             data={buildChartData(privateDistribution, "default")}
             options={options}
@@ -149,7 +149,7 @@ export default function MultiplePieChart({
         <h3 className="text-base font-medium text-center mb-3">
           {relational.relational} (Mutual vs Non-Mutual)
         </h3>
-        <div className="w-72 h-72">
+        <div className="w-68 h-68">
             <Pie
             data={buildChartData(mutualDistribution, "reverse")}
             options={options}
