@@ -39,6 +39,7 @@ export interface RelationalDetail {
   relational: string;
   bg_color: string;
   text_color: string;
+  border_color: string;
 }
 
 // General Statistics Model

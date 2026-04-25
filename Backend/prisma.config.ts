@@ -4,10 +4,16 @@ import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
+  // Schema for PostgreSQL
   // schema: "prisma-postgre/schema.prisma",
+  
+  // Schema for MySQL
   schema: "prisma-mysql/schema.prisma",
   migrations: {
+    // Migrations for PostgreSQL
     // path: "prisma-postgre/migrations",
+
+    // Migrations for MySQL
     path: "prisma-mysql/migrations",
     seed: "tsx prisma-mysql/seed.ts",
   },

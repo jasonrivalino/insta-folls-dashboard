@@ -63,7 +63,7 @@ export const getRelationById = async (req: Request, res: Response) => {
 // Add new Relation data
 export const createRelationData = async (req: Request, res: Response) => {
   try {
-    const { relational, text_color, bg_color } = req.body
+    const { relational, text_color, bg_color, border_color } = req.body
 
     // Required fields check
     if (!relational) {
@@ -78,6 +78,7 @@ export const createRelationData = async (req: Request, res: Response) => {
         relational,
         text_color: text_color ?? rgbToHex(randomInt(200, 255), randomInt(200, 255), randomInt(200, 255)),
         bg_color: bg_color ?? rgbToHex(randomInt(0, 128), randomInt(0, 128), randomInt(0, 128)),
+        border_color: border_color ?? rgbToHex(randomInt(100, 200), randomInt(100, 200), randomInt(100, 200)),
       }
     })
 
@@ -113,14 +114,14 @@ export const updateRelationData = async (req: Request, res: Response) => {
       })
     }
     
-    const { relational, text_color, bg_color } = req.body
+    const { relational, text_color, bg_color, border_color } = req.body
     const updateData: any = {}
 
     // Only update fields that are provided
     if (relational !== undefined) updateData.relational = relational
     if (text_color !== undefined) updateData.text_color = text_color
     if (bg_color !== undefined) updateData.bg_color = bg_color
-
+    if (border_color !== undefined) updateData.border_color = border_color
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         success: false,

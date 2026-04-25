@@ -28,6 +28,7 @@ async function main() {
     relational,
     text_color: rgbToHex(randomInt(200, 255), randomInt(200, 255), randomInt(200, 255)),
     bg_color: rgbToHex(randomInt(0, 128), randomInt(0, 128), randomInt(0, 128)),
+    border_color: rgbToHex(randomInt(100, 200), randomInt(100, 200), randomInt(100, 200)),
   }))
   
   await prisma.relation_Status.createMany({

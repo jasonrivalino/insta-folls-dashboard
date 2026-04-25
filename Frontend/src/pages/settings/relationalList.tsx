@@ -20,9 +20,10 @@ export default function RelationalList() {
     relational: "",
     bg_color: "#000000",
     text_color: "#FFFFFF",
+    border_color: "#808080",
   });
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [initialColors, setInitialColors] = useState<{bg_color: string; text_color: string} | null>(null);
+  const [initialColors, setInitialColors] = useState<{bg_color: string; text_color: string; border_color: string} | null>(null);
 
   // Delete popup state
   const [showDeletePopup, setShowDeletePopup] = useState(false);
@@ -63,6 +64,7 @@ export default function RelationalList() {
         relational: "",
         bg_color: "#000000",
         text_color: "#FFFFFF",
+        border_color: "#808080",
         });
         return;
     }
@@ -77,11 +79,13 @@ export default function RelationalList() {
     setInitialColors({
         bg_color: relation.bg_color,
         text_color: relation.text_color,
+        border_color: relation.border_color,
     });
     setFormData({
         relational: relation.relational,
-        bg_color: relation.bg_color,
-        text_color: relation.text_color,
+        bg_color: relation.bg_color || "#000000",
+        text_color: relation.text_color || "#FFFFFF",
+        border_color: relation.border_color || "#808080",
     });
   };
 
@@ -229,6 +233,7 @@ export default function RelationalList() {
                                 style={{
                                 backgroundColor: relation.bg_color,
                                 color: relation.text_color,
+                                border: `2px solid ${relation.border_color}`,
                                 }}
                             >
                                 {relation.relational}
@@ -308,7 +313,7 @@ export default function RelationalList() {
                             Relational Badge Customize:
                         </label>
                         <div className="flex flex-row gap-3 bg-[#EEEEEE] px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50 items-center">
-                            <div className="flex flex-row gap-3 items-center mb-1 w-1/4">
+                            <div className="flex flex-row gap-3 items-center mb-1 w-1/2">
                                 {/* BG Color */}
                                 <div className="flex flex-col gap-1 flex-1">
                                     <label className="text-sm font-medium text-gray-700 text-center">
@@ -372,6 +377,38 @@ export default function RelationalList() {
                                         className="text-xs font-mono bg-white rounded-lg text-center text-gray-600 px-1 py-0.5 border shadow-sm w-full mt-1"
                                     />
                                 </div>
+
+                                {/* Border Color */}
+                                <div className="flex flex-col gap-1 flex-1">
+                                    <label className="text-sm font-medium text-gray-700 text-center">
+                                        Border Color
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                    <input
+                                        type="color"
+                                        value={formData.border_color}
+                                        onChange={(e) =>
+                                        setFormData({ ...formData, border_color: e.target.value })
+                                        }
+                                        className="w-full h-7 cursor-pointer"
+                                    />
+                                    </div>
+
+                                    <input
+                                        type="text"
+                                        value={formData.border_color}
+                                        onChange={(e) => {
+                                            let value = e.target.value;
+                                            if (!value.startsWith("#")) value = "#" + value;
+                                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                            setFormData({ ...formData, border_color: value });
+                                            }
+                                        }}
+                                        maxLength={7}
+                                        placeholder="#FFFFFF"
+                                        className="text-xs font-mono bg-white rounded-lg text-center text-gray-600 px-1 py-0.5 border shadow-sm w-full mt-1"
+                                    />
+                                </div>
                             </div>
 
                             <div className="ml-auto flex flex-col items-center gap-2">
@@ -383,6 +420,7 @@ export default function RelationalList() {
                                                 ...formData,
                                                 bg_color: "#000000",
                                                 text_color: "#FFFFFF",
+                                                border_color: "#808080",
                                             });
                                             return;
                                         }
@@ -393,6 +431,7 @@ export default function RelationalList() {
                                                 ...formData,
                                                 bg_color: initialColors.bg_color,
                                                 text_color: initialColors.text_color,
+                                                border_color: initialColors.border_color,
                                             });
                                         }
                                     }}
@@ -408,6 +447,7 @@ export default function RelationalList() {
                                         style={{
                                         backgroundColor: formData.bg_color,
                                         color: formData.text_color,
+                                        border: `2px solid ${formData.border_color}`,
                                         }}
                                     >
                                         {formData.relational || "Preview"}
