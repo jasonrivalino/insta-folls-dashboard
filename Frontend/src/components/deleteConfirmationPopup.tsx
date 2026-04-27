@@ -1,5 +1,5 @@
 import { FiX } from "react-icons/fi";
-import type { DeletePopupProps } from "../models/table.models";
+import type { DeletePopupProps } from "../models/popup.models";
 
 export default function DeleteConfirmationPopup({ attribute, data, onDelete, onClose }: DeletePopupProps) {
   return (

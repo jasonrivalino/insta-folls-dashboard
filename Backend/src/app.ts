@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import instaRoutes from './routes/insta.routes'
 import relationRoutes from './routes/relation.routes'
 import instaRelationalRoutes from './routes/instaRelational.routes'
+import subrelationRoutes from './routes/subrelation.routes'
 import accountCenterRoutes from './routes/accountCenter.routes'
 
 dotenv.config()
@@ -18,6 +19,7 @@ app.use(express.json())
 app.use('/api/insta-user-data', instaRoutes)
 app.use('/api/relational-status-data', relationRoutes)
 app.use('/api/insta-and-relational-user', instaRelationalRoutes)
+app.use('/api/subrelational-status-data', subrelationRoutes)
 app.use('/api/main-account-center', accountCenterRoutes)
 
 app.get('/', (_req, res) => {

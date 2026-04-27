@@ -42,6 +42,18 @@ export interface RelationalDetail {
   border_color: string;
 }
 
+// Subrelational Detail Model
+export interface SubRelationalDetailResponse {
+  success: boolean;
+  total: number;
+  data: SubRelationalDetail[];
+}
+export interface SubRelationalDetail {
+  id: number;
+  subrelational: string;
+  relationsId: number;
+}
+
 // General Statistics Model
 export interface GeneralStatistics {
   total_data: number;

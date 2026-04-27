@@ -25,6 +25,7 @@ model Main_Instagram_Data {
   biography        String?
   is_mutual        Boolean
   last_update      DateTime?  @updatedAt
+  gender           String?
 
   relations        Relation_Status[]
   subrelations     Subrelation_Status[]
@@ -35,7 +36,7 @@ model Relation_Status {
   relational       String    @unique
   text_color       String    @db.Char(7)
   bg_color         String    @db.Char(7)
-  border_color     String?   @db.Char(7)
+  border_color     String    @db.Char(7)
 
   @@unique([text_color, bg_color, border_color], name: "relation_color_options")
 
@@ -53,8 +54,10 @@ model Subrelation_Status {
   id                Int      @id @default(autoincrement())
   subrelational     String
 
-  relationsId       Int?
-  relations         Relation_Status? @relation(fields: [relationsId], references: [id])
+  relationsId       Int
+  relations         Relation_Status @relation(fields: [relationsId], references: [id], onDelete: Cascade)
+
+  @@unique([subrelational, relationsId], name: "subrelational_naming")
   
   instagram_users   Main_Instagram_Data[]
 }

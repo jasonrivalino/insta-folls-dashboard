@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import type { RelationalDetail } from "../../models/table.models";
+import type { RelationalDetail, SubRelationalDetail } from "../../models/table.models";
 import { createRelational, deleteRelational, getRelationalList, updateRelational } from "../../services/settings/relationalList.services";
+import { createSubrelational, deleteSubrelational, getSubrelationalList, updateSubrelational } from "../../services/settings/subrelationalList.services";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import DeleteConfirmationPopup from "../../components/deleteConfirmationPopup";
 import ActionResultPopup from "../../components/actionResultPopup";
@@ -25,13 +26,25 @@ export default function RelationalList() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [initialColors, setInitialColors] = useState<{bg_color: string; text_color: string; border_color: string} | null>(null);
 
-  // Delete popup state
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  // Subrelational state
+  const [subrelations, setSubrelations] = useState<SubRelationalDetail[]>([]);
+  const [editingSubId, setEditingSubId] = useState<number | null>(null);
+
+  // Relational popup state
+  const [showDeleteRelationalPopup, setShowDeleteRelationalPopup] = useState(false);
   const [selectedRelationalId, setSelectedRelationalId] = useState<number | null>(null);
   const selectedRelational = relations.find(rel => rel.id === selectedRelationalId) || null;
-  const [resultPopupOpen, setResultPopupOpen] = useState(false);
-  const [actionSuccess, setActionSuccess] = useState<boolean | null>(null);
-  const [resultMessage, setResultMessage] = useState<string>("");
+  const [resultRelationalPopupOpen, setResultRelationalPopupOpen] = useState(false);
+  const [actionRelationalSuccess, setActionRelationalSuccess] = useState<boolean | null>(null);
+  const [resultRelationalMessage, setResultRelationalMessage] = useState<string>("");
+
+  // Subrelational popup state
+  const [showDeleteSubrelationalPopup, setShowDeleteSubrelationalPopup] = useState(false);
+  const [selectedSubrelationalId, setSelectedSubrelationalId] = useState<number | null>(null);
+  const selectedSubrelational = subrelations.find(sub => sub.id === selectedSubrelationalId) || null;
+  const [resultSubrelationalPopupOpen, setResultSubrelationalPopupOpen] = useState(false);
+  const [actionSubrelationalSuccess, setActionSubrelationalSuccess] = useState<boolean | null>(null);
+  const [resultSubrelationalMessage, setResultSubrelationalMessage] = useState<string>("");
 
   useEffect(() => {
     const fetchRelations = async () => {
@@ -71,11 +84,12 @@ export default function RelationalList() {
 
     // Edit mode
     if (!relationalId) return;
-
+    
     const relation = relations.find((r) => r.id === relationalId);
     if (!relation) return;
-
-    setEditingId(relationalId);
+    
+    setSubrelations([]);
+    setEditingId(relationalId);    
     setInitialColors({
         bg_color: relation.bg_color,
         text_color: relation.text_color,
@@ -89,42 +103,54 @@ export default function RelationalList() {
     });
   };
 
+  // Refresh subrelational list
+  const refreshSub = async (relationsId: number) => {
+      const res = await getSubrelationalList(`?relationsId=${relationsId}`);
+      setSubrelations(res.data);
+    };
+    
+  useEffect(() => {
+    if (formMode === "edit" && editingId) {
+      refreshSub(editingId);
+    }
+  }, [editingId, formMode]);
+
   // Handle submit (add / edit)
   const handleSubmitRelation = async () => {
     try {
         if (!formData.relational.trim()) {
-        setActionSuccess(false);
-        setResultMessage("Relational name is required.");
-        setResultPopupOpen(true);
+        setActionRelationalSuccess(false);
+        setResultRelationalMessage("Relational name is required.");
+        setResultRelationalPopupOpen(true);
         return;
         }
 
         if (formMode === "add") {
         await createRelational(formData);
-        setResultMessage("Relational created successfully.");
+        setResultRelationalMessage("Relational created successfully.");
         }
 
         if (formMode === "edit" && editingId) {
         await updateRelational(editingId, formData);
-        setResultMessage("Relational updated successfully.");
+        setResultRelationalMessage("Relational updated successfully.");
         }
 
         // Refresh table
         const res = await getRelationalList();
         if (res.success) setRelations(res.data);
 
-        setActionSuccess(true);
+        setActionRelationalSuccess(true);
         setFormMode("idle");
     } catch (error) {
         console.error(error);
-        setActionSuccess(false);
-        setResultMessage("Failed to save relational data.");
+        setActionRelationalSuccess(false);
+        setResultRelationalMessage("Failed to save relational data.");
     } finally {
-        setResultPopupOpen(true);
+        setResultRelationalPopupOpen(true);
     }
   };
 
-  // Handle delete Instagram user
+  // Handle delete Relational
   const handleDeleteRelational = async () => {
     if (!selectedRelationalId) return;
 
@@ -137,8 +163,8 @@ export default function RelationalList() {
       }
 
       // Success result
-      setActionSuccess(true);
-      setResultMessage("Relational deleted successfully.");
+      setActionRelationalSuccess(true);
+      setResultRelationalMessage("Relational deleted successfully.");
     } catch (error: unknown) {
       // Error result
       console.error("DELETE ERROR:", error);
@@ -150,21 +176,137 @@ export default function RelationalList() {
           error.response?.statusText ??
           "No additional details.";
 
-        setResultMessage(
-          `Failed to delete Instagram user.\n${status}: ${details}`
+        setResultRelationalMessage(
+          `Failed to delete Relational.\n${status}: ${details}`
         );
       } else if (error instanceof Error) {
-        setResultMessage(error.message);
+        setResultRelationalMessage(error.message);
       } else {
-        setResultMessage("Unexpected error occurred.");
+        setResultRelationalMessage("Unexpected error occurred.");
       }
-      setActionSuccess(false);
+      setActionRelationalSuccess(false);
     } finally {
       // Close delete popup & open result popup
-      setShowDeletePopup(false);
-      setResultPopupOpen(true);
+      setShowDeleteRelationalPopup(false);
+      setResultRelationalPopupOpen(true);
     }
   };
+
+  // Handle delete subrelational
+  const handleDeleteSubrelational = async () => {
+    if (!selectedSubrelationalId) return;
+
+    try {
+        await deleteSubrelational(selectedSubrelationalId);
+        await refreshSub(editingId!);
+
+        setActionSubrelationalSuccess(true);
+        setResultSubrelationalMessage("Subrelational deleted successfully.");
+    } catch (error: unknown) {
+        console.error(error);
+        setActionSubrelationalSuccess(false);
+        setResultSubrelationalMessage("Failed to delete subrelational.");
+    } finally {
+        setShowDeleteSubrelationalPopup(false);
+        setResultSubrelationalPopupOpen(true);
+    }
+  };
+
+  function SubrelationInput({ onAdd }: { onAdd: (name: string) => void }) {
+    const [value, setValue] = useState("");
+
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700">
+                Add New Subrelational
+            </label>
+            <div className="flex items-center gap-2">
+                <input
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder="Enter Subrelational..."
+                    className="flex-1 px-2.5 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+                />
+                <button
+                    onClick={() => {
+                    if (!value.trim()) return;
+                    onAdd(value);
+                    setValue("");
+                    }}
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                >
+                    Add
+                </button>
+            </div>
+        </div>
+    );
+  }
+
+  function SubrelationItem({ item, isEditing, onStartEdit, onCancelEdit, onUpdate, onDelete }: {
+    item: SubRelationalDetail;
+    isEditing: boolean;
+    onStartEdit: () => void;
+    onCancelEdit: () => void;
+    onUpdate: (name: string) => void;
+    onDelete: () => void;
+    }) {
+    const [value, setValue] = useState(item.subrelational);
+
+    useEffect(() => {
+        if (isEditing) {
+            setValue(item.subrelational);
+        }
+    }, [isEditing, item.subrelational]);
+
+    return (
+        <div className="flex items-center gap-2 border rounded-lg px-2 py-1.5 bg-white shadow-sm">
+            {isEditing ? (
+                <input
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="flex-1 px-2 py-1 border rounded text-sm w-2/5"
+                />
+            ) : (
+                <span className="flex-1 text-sm">{item.subrelational}</span>
+            )}
+
+            {isEditing ? (
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => {
+                        onUpdate(value);
+                        onCancelEdit();
+                        }}
+                        className="text-green-600 text-sm hover:underline cursor-pointer"
+                    >
+                        Save
+                    </button>
+                    <button
+                        onClick={onCancelEdit}
+                        className="text-gray-500 text-sm hover:underline cursor-pointer"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            ) : (
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onStartEdit}
+                        className="text-blue-600 text-sm hover:underline cursor-pointer"
+                    >
+                        Edit
+                    </button>
+                    <button
+                        onClick={onDelete}
+                        className="text-red-600 text-sm hover:underline cursor-pointer"
+                    >
+                        Delete
+                    </button>
+                </div>
+            )}
+        </div>
+        );
+    }
 
   const thClass =
     "px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide text-center whitespace-nowrap";
@@ -256,7 +398,7 @@ export default function RelationalList() {
                                         title="Delete"
                                         onClick={() => {
                                             setSelectedRelationalId(relation.id);
-                                            setShowDeletePopup(true);
+                                            setShowDeleteRelationalPopup(true);
                                         }}
                                     >
                                         <FiTrash2 size={18} />
@@ -274,22 +416,22 @@ export default function RelationalList() {
         {/* Add / Edit Section */}
         <div className="flex-1 relative overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-white">
             {formMode === "idle" && (
-            <div className="flex flex-col items-center justify-center h-full">
-                <h2 className="text-xl font-medium text-gray-500 italic">Choose Between Add or Edit Relational List</h2>
-            </div>
+                <div className="flex flex-col items-center justify-center h-full">
+                    <h2 className="text-xl font-medium text-gray-500 italic">Choose Between Add or Edit Relational List</h2>
+                </div>
             )}
 
             {formMode !== "idle" && (
-            <div className="flex flex-col gap-3 p-6 max-h-[81.5vh] overflow-y-auto">
+            <div className="flex flex-col gap-3 p-4 max-h-[81.5vh] overflow-y-auto">
                 <h2 className="text-xl font-semibold text-gray-800 text-center">
                 {formMode === "add"
                     ? "Add New Relational"
                     : `Edit Relational - ${formData.relational}`}
                 </h2>
 
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-4 bg-[#EEEEEE] p-3 rounded-lg">
                     {/* Relational Name */}
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1.5">
                         <label className="text-sm font-medium text-gray-700">
                             Relational Name:
                             {formMode === "add" && (
@@ -307,113 +449,220 @@ export default function RelationalList() {
                         />
                     </div>
 
-                    {/* Text Color */}
-                    <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium text-gray-700">
-                            Relational Badge Customize:
-                        </label>
-                        <div className="flex flex-row gap-3 bg-[#EEEEEE] px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50 items-center">
-                            <div className="flex flex-row gap-3 items-center mb-1 w-1/2">
-                                {/* BG Color */}
-                                <div className="flex flex-col gap-1 flex-1">
-                                    <label className="text-sm font-medium text-gray-700 text-center">
-                                        BG Color
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                    <input
-                                        type="color"
-                                        value={formData.bg_color}
-                                        onChange={(e) =>
-                                        setFormData({ ...formData, bg_color: e.target.value })
-                                        }
-                                        className="w-full h-7 cursor-pointer"
-                                    />
-                                    </div>
+                    <div className="flex flex-row gap-3.5">
+                        {/* Subrelational Section */}
+                        {formMode === "edit" && (
+                            <div className="flex flex-col gap-1.5 w-[49%]">
+                                <label className="text-sm font-medium text-gray-700">Subrelational</label>
+                                <div className="flex flex-col gap-4 bg-[#FAFAFA] px-3 pt-2.5 pb-3 rounded-lg shadow-sm border border-gray-700/50">
+                                    {/* Input Add */}
+                                    <SubrelationInput
+                                        onAdd={async (name) => {
+                                            try {
+                                                if (!editingId) return;
 
-                                    <input
-                                        type="text"
-                                        value={formData.bg_color}
-                                        onChange={(e) => {
-                                            let value = e.target.value;
-                                            if (!value.startsWith("#")) value = "#" + value;
-                                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                            setFormData({ ...formData, bg_color: value });
+                                                await createSubrelational({
+                                                    subrelational: name,
+                                                    relationsId: editingId,
+                                                });
+
+                                                await refreshSub(editingId!);
+
+                                                setActionSubrelationalSuccess(true);
+                                                setResultSubrelationalMessage("Subrelational added successfully.");
+                                            } catch {
+                                                setActionSubrelationalSuccess(false);
+                                                setResultSubrelationalMessage("Failed to add subrelational.");
+                                            } finally {
+                                                setResultSubrelationalPopupOpen(true);
                                             }
                                         }}
-                                        maxLength={7}
-                                        placeholder="#FFFFFF"
-                                        className="text-xs font-mono bg-white rounded-lg text-center text-gray-600 px-1 py-0.5 border shadow-sm w-full mt-1"
                                     />
-                                </div>
-                                    
-                                {/* Text Color */}
-                                <div className="flex flex-col gap-1 flex-1">
-                                    <label className="text-sm font-medium text-gray-700 text-center">
-                                        Text Color
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                    <input
-                                        type="color"
-                                        value={formData.text_color}
-                                        onChange={(e) =>
-                                        setFormData({ ...formData, text_color: e.target.value })
-                                        }
-                                        className="w-full h-7 cursor-pointer"
-                                    />
+
+                                    {/* List */}
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-sm font-medium text-gray-700">
+                                            Subrelational List
+                                        </label>
+                                        <div className="space-y-2 max-h-48 overflow-y-auto bg-[#cdcdcd] rounded-lg border border-black px-2 py-2">
+                                            {subrelations.length === 0 && (
+                                                <p className="text-sm text-gray-400">No subrelations yet.</p>
+                                            )}
+
+                                            {subrelations.map((item) => (
+                                                <SubrelationItem
+                                                    key={item.id}
+                                                    item={item}
+                                                    isEditing={editingSubId === item.id}
+
+                                                    onStartEdit={() => {
+                                                        setEditingSubId(item.id); 
+                                                    }}
+
+                                                    onCancelEdit={() => {
+                                                        setEditingSubId(null);
+                                                    }}
+
+                                                    onUpdate={async (name) => {
+                                                        try {
+                                                            await updateSubrelational(item.id, { subrelational: name });
+                                                            await refreshSub(editingId!);
+
+                                                            setActionSubrelationalSuccess(true);
+                                                            setResultSubrelationalMessage("Subrelational updated successfully.");
+                                                        } catch {
+                                                            setActionSubrelationalSuccess(false);
+                                                            setResultSubrelationalMessage("Failed to update subrelational.");
+                                                        } finally {
+                                                            setResultSubrelationalPopupOpen(true);
+                                                        }
+                                                    }}
+
+                                                    onDelete={() => {
+                                                        setSelectedSubrelationalId(item.id);
+                                                        setShowDeleteSubrelationalPopup(true);
+                                                    }}
+                                                />
+                                                ))}
+                                        </div>
                                     </div>
-
-                                    <input
-                                        type="text"
-                                        value={formData.text_color}
-                                        onChange={(e) => {
-                                            let value = e.target.value;
-                                            if (!value.startsWith("#")) value = "#" + value;
-                                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                            setFormData({ ...formData, text_color: value });
-                                            }
-                                        }}
-                                        maxLength={7}
-                                        placeholder="#FFFFFF"
-                                        className="text-xs font-mono bg-white rounded-lg text-center text-gray-600 px-1 py-0.5 border shadow-sm w-full mt-1"
-                                    />
-                                </div>
-
-                                {/* Border Color */}
-                                <div className="flex flex-col gap-1 flex-1">
-                                    <label className="text-sm font-medium text-gray-700 text-center">
-                                        Border Color
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                    <input
-                                        type="color"
-                                        value={formData.border_color}
-                                        onChange={(e) =>
-                                        setFormData({ ...formData, border_color: e.target.value })
-                                        }
-                                        className="w-full h-7 cursor-pointer"
-                                    />
-                                    </div>
-
-                                    <input
-                                        type="text"
-                                        value={formData.border_color}
-                                        onChange={(e) => {
-                                            let value = e.target.value;
-                                            if (!value.startsWith("#")) value = "#" + value;
-                                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                            setFormData({ ...formData, border_color: value });
-                                            }
-                                        }}
-                                        maxLength={7}
-                                        placeholder="#FFFFFF"
-                                        className="text-xs font-mono bg-white rounded-lg text-center text-gray-600 px-1 py-0.5 border shadow-sm w-full mt-1"
-                                    />
                                 </div>
                             </div>
+                        )}
 
-                            <div className="ml-auto flex flex-col items-center gap-2">
-                                {/* Reset color button */}
-                                <button onClick={() => {
+                        {/* Text Color */}
+                        <div className="flex flex-col gap-1.5 flex-1">
+                            <label className="text-sm font-medium text-gray-700">
+                                Relational Badge Customize:
+                            </label>
+                                <div className={`flex ${
+                                    formMode === "edit" ? "flex-col items-start" : "flex-row items-center"
+                                } gap-3 bg-[#FAFAFA] p-3 rounded-lg shadow-sm border border-gray-700/50`}
+                                >
+                                <div className="flex flex-row gap-3 items-center w-full">
+                                    {/* BG Color */}
+                                    <div className="flex flex-col gap-1 flex-1">
+                                        <label className="text-sm font-medium text-gray-700 text-center">
+                                            BG Color
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            value={formData.bg_color}
+                                            onChange={(e) =>
+                                            setFormData({ ...formData, bg_color: e.target.value })
+                                            }
+                                            className="w-full h-7 cursor-pointer"
+                                        />
+                                        </div>
+
+                                        <input
+                                            type="text"
+                                            value={formData.bg_color}
+                                            onChange={(e) => {
+                                                let value = e.target.value;
+                                                if (!value.startsWith("#")) value = "#" + value;
+                                                if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                                setFormData({ ...formData, bg_color: value });
+                                                }
+                                            }}
+                                            maxLength={7}
+                                            placeholder="#FFFFFF"
+                                            className="text-xs font-mono bg-white rounded-lg text-center text-gray-600 px-1 py-0.5 border shadow-sm w-full mt-1"
+                                        />
+                                    </div>
+                                        
+                                    {/* Text Color */}
+                                    <div className="flex flex-col gap-1 flex-1">
+                                        <label className="text-sm font-medium text-gray-700 text-center">
+                                            Text Color
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            value={formData.text_color}
+                                            onChange={(e) =>
+                                            setFormData({ ...formData, text_color: e.target.value })
+                                            }
+                                            className="w-full h-7 cursor-pointer"
+                                        />
+                                        </div>
+
+                                        <input
+                                            type="text"
+                                            value={formData.text_color}
+                                            onChange={(e) => {
+                                                let value = e.target.value;
+                                                if (!value.startsWith("#")) value = "#" + value;
+                                                if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                                setFormData({ ...formData, text_color: value });
+                                                }
+                                            }}
+                                            maxLength={7}
+                                            placeholder="#FFFFFF"
+                                            className="text-xs font-mono bg-white rounded-lg text-center text-gray-600 px-1 py-0.5 border shadow-sm w-full mt-1"
+                                        />
+                                    </div>
+
+                                    {/* Border Color */}
+                                    <div className="flex flex-col gap-1 flex-1">
+                                        <label className="text-sm font-medium text-gray-700 text-center">
+                                            Border Color
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            value={formData.border_color}
+                                            onChange={(e) =>
+                                            setFormData({ ...formData, border_color: e.target.value })
+                                            }
+                                            className="w-full h-7 cursor-pointer"
+                                        />
+                                        </div>
+
+                                        <input
+                                            type="text"
+                                            value={formData.border_color}
+                                            onChange={(e) => {
+                                                let value = e.target.value;
+                                                if (!value.startsWith("#")) value = "#" + value;
+                                                if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                                setFormData({ ...formData, border_color: value });
+                                                }
+                                            }}
+                                            maxLength={7}
+                                            placeholder="#FFFFFF"
+                                            className="text-xs font-mono bg-white rounded-lg text-center text-gray-600 px-1 py-0.5 border shadow-sm w-full mt-1"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className={`flex ${
+                                    formMode === "edit" ? "flex-row gap-4" : "flex-col gap-2 ml-auto"
+                                    } items-end w-full`}>                                
+                                    {/* Preview */}
+                                    <div className="flex flex-col gap-1">
+                                        {formMode === "edit" && (
+                                            <label className="text-sm font-medium text-gray-700 text-center">
+                                                Preview
+                                            </label>
+                                        )}
+                                        <div className="border border-gray-400 bg-white p-2 flex items-center rounded-lg shadow-sm">
+                                            <span
+                                                className="px-3 py-1 rounded-full text-sm font-semibold"
+                                                style={{
+                                                backgroundColor: formData.bg_color,
+                                                color: formData.text_color,
+                                                border: `2px solid ${formData.border_color}`,
+                                                }}
+                                            >
+                                                {formData.relational || "Preview"}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Reset color button */}
+                                    <button onClick={() => {
                                         // Add mode
                                         if (formMode === "add") {
                                             setFormData({
@@ -433,25 +682,11 @@ export default function RelationalList() {
                                                 text_color: initialColors.text_color,
                                                 border_color: initialColors.border_color,
                                             });
-                                        }
-                                    }}
-                                    className="rounded-lg border text-gray-600 bg-white hover:bg-gray-50 text-sm shadow-sm w-full py-1"
-                                    >
-                                    Reset Colors
-                                </button>
-                            
-                                {/* Preview */}
-                                <div className="border border-gray-400 bg-white px-4 py-2 flex items-center rounded-lg shadow-sm">
-                                    <span
-                                        className="px-3 py-1 rounded-full text-sm font-semibold"
-                                        style={{
-                                        backgroundColor: formData.bg_color,
-                                        color: formData.text_color,
-                                        border: `2px solid ${formData.border_color}`,
-                                        }}
-                                    >
-                                        {formData.relational || "Preview"}
-                                    </span>
+                                        }}}
+                                        className="rounded-lg border text-gray-600 bg-white hover:bg-gray-50 text-sm shadow-sm px-2 py-1 ml-auto transition-colors flex items-center justify-center"
+                                        >
+                                        Reset Colors
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -459,7 +694,7 @@ export default function RelationalList() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end gap-2 mt-4">
+                <div className="flex justify-end gap-2">
                     <button
                         onClick={() => { setFormMode("idle"); setInitialColors(null); }}
                         className="px-3 py-1 rounded-lg border cursor-pointer bg-white text-gray-700 font-semibold hover:bg-gray-100 transition shadow-sm"
@@ -478,25 +713,45 @@ export default function RelationalList() {
         </div>
       </div>
       
-      {/* Delete Confirmation */}
-      {showDeletePopup && selectedRelationalId && (
+      {/* Delete Relational Confirmation */}
+      {showDeleteRelationalPopup && selectedRelationalId && (
         <DeleteConfirmationPopup
           attribute="Relational"
           data={selectedRelational?.relational || ""}
           onDelete={() => handleDeleteRelational()}
-          onClose={() => setShowDeletePopup(false)}
+          onClose={() => setShowDeleteRelationalPopup(false)}
         />
       )}
             
-      {/* Action Result Popup */}
-      {resultPopupOpen && actionSuccess !== null && (
+      {/* Action Result Relational Popup */}
+      {resultRelationalPopupOpen && actionRelationalSuccess !== null && (
         <ActionResultPopup
-          isOpen={resultPopupOpen}
-          success={actionSuccess}
-          message={resultMessage}
-          onClose={() => setResultPopupOpen(false)}
+          isOpen={resultRelationalPopupOpen}
+          success={actionRelationalSuccess}
+          message={resultRelationalMessage}
+          onClose={() => setResultRelationalPopupOpen(false)}
         />
       )}
+
+      {/* Delete Subrelational Confirmation */}
+      {showDeleteSubrelationalPopup && selectedSubrelationalId && (
+        <DeleteConfirmationPopup
+            attribute="Subrelational"
+            data={selectedSubrelational?.subrelational || ""}
+            onDelete={handleDeleteSubrelational}
+            onClose={() => setShowDeleteSubrelationalPopup(false)}
+        />
+        )}
+
+      {/* Action Result Subrelational Popup */}
+      {resultSubrelationalPopupOpen && actionSubrelationalSuccess !== null && (
+        <ActionResultPopup
+            isOpen={resultSubrelationalPopupOpen}
+            success={actionSubrelationalSuccess}
+            message={resultSubrelationalMessage}
+            onClose={() => setResultSubrelationalPopupOpen(false)}
+        />
+        )}
     </div>
   );
 }
