@@ -25,10 +25,16 @@ model Main_Instagram_Data {
   biography        String?
   is_mutual        Boolean
   last_update      DateTime?  @updatedAt
-  gender           String?
+  gender           Gender?
 
   relations        Relation_Status[]
   subrelations     Subrelation_Status[]
+}
+
+enum Gender {
+  Male
+  Female
+  Unknown
 }
 
 model Relation_Status {
