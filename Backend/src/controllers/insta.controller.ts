@@ -16,7 +16,8 @@ export const getAllInstagramData = async (req: Request, res: Response) => {
       sortBy,
       order = 'desc',
       is_private,
-      is_mutual
+      is_mutual,
+      gender
     } = req.query
 
     // Sortable fields
@@ -51,6 +52,9 @@ export const getAllInstagramData = async (req: Request, res: Response) => {
     }
     if (is_mutual !== undefined) {
       where.is_mutual = is_mutual === 'true'
+    }
+    if (gender !== undefined) {
+      where.gender = gender
     }
 
     const rawData = await prisma.main_Instagram_Data.findMany({
@@ -109,7 +113,7 @@ export const getInstagramById = async (req: Request, res: Response) => {
 export const createInstagramData = async (req: Request, res: Response) => {
   try {
     const { pk_def_insta, username, fullname, is_private, 
-            media_post_total, followers, following, biography, is_mutual } = req.body
+            media_post_total, followers, following, biography, gender, is_mutual } = req.body
 
     // Required fields check
     if (!username) {
@@ -196,6 +200,7 @@ export const createInstagramData = async (req: Request, res: Response) => {
         followers: followers ?? faker.number.int({ min: 100, max: 5000 }),
         following: following ?? faker.number.int({ min: 100, max: 5000 }),
         biography: normalizedBiography,
+        gender: gender ?? faker.helpers.arrayElement(['Male', 'Female', 'Unknown']),
         is_mutual: is_mutual ?? faker.datatype.boolean(),
         last_update: new Date(Date.now())
       }
@@ -234,7 +239,7 @@ export const updateInstagramData = async (req: Request, res: Response) => {
     }
     
     const { fullname, is_private, media_post_total,
-            followers, following, biography, is_mutual } = req.body
+            followers, following, biography, gender, is_mutual } = req.body
     const updateData: any = {}
 
     // Only update fields that are provided
@@ -244,6 +249,7 @@ export const updateInstagramData = async (req: Request, res: Response) => {
     if (followers !== undefined) updateData.followers = followers
     if (following !== undefined) updateData.following = following
     if (biography !== undefined) updateData.biography = biography
+    if (gender !== undefined) updateData.gender = gender
     if (typeof is_mutual === 'boolean') updateData.is_mutual = is_mutual
 
     if (Object.keys(updateData).length === 0) {

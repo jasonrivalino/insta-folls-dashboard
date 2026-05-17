@@ -40,9 +40,17 @@ export const getInstaRelationalData = async (req: Request, res: Response) => {
       },
       select: {
         id: true,
+
         relations: {
           select: {
             id: true
+          }
+        },
+
+        subrelations: {
+          select: {
+            id: true,
+            relationsId: true
           }
         }
       }
@@ -53,34 +61,56 @@ export const getInstaRelationalData = async (req: Request, res: Response) => {
     const data = await prisma.main_Instagram_Data.findMany(query)
 
     // DataList (flat)
-    const dataList: Array<{ insta_user_id: number; relation_id: number }> = []
+    const dataList: Array<{
+      insta_user_id: number
+      relation: {
+        relation_id: number
+        subrelational_id: number[]
+      }
+    }> = []
 
     // DataArray (grouped)
     const dataArray = data
       .map((user: any) => {
-        const relationIds = user.relations
+        const relations = user.relations
           .map((rel: any) => {
+            const subrelationIds = user.subrelations
+              .filter(
+                (sub: any) => sub.relationsId === rel.id
+              )
+              .map((sub: any) => sub.id)
+              .sort((a: number, b: number) => a - b)
+
+            const relationData = {
+              relation_id: rel.id,
+              subrelational_id: subrelationIds
+            }
+
             dataList.push({
               insta_user_id: user.id,
-              relation_id: rel.id
+              relation: relationData
             })
-            return rel.id
+
+            return relationData
           })
-          .sort((a: number, b: number) => a - b)
+          .sort(
+            (a: any, b: any) =>
+              a.relation_id - b.relation_id
+          )
 
         return {
           insta_user_id: user.id,
-          relation_id: relationIds
+          relation: relations
         }
       })
-      .filter(item => item.relation_id.length > 0)
+      .filter((item: any) => item.relation.length > 0)
 
     // Sort both outputs for consistent ordering
     dataArray.sort((a, b) => a.insta_user_id - b.insta_user_id)
     dataList.sort(
       (a, b) =>
         a.insta_user_id - b.insta_user_id ||
-        a.relation_id - b.relation_id
+        a.relation.relation_id - b.relation.relation_id
     )
 
     return res.status(200).json({
@@ -257,7 +287,23 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       where,
       orderBy,
       include: {
-        relations: relationsInclude
+        relations: {
+          ...relationsInclude,
+          include: {
+            subrelations: {
+              select: {
+                id: true,
+                subrelational: true,
+                relationsId: true
+              }
+            }
+          }
+        },
+        subrelations: {
+          select: {
+            id: true
+          }
+        }
       }
     }
     if (typeof limit === 'number') {
@@ -357,15 +403,16 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
           id: user.id,
           pk_def_insta: user.pk_def_insta,
           username: user.username,
-          fullname: user.fullname,
+          fullname: user.fullname ?? null,
           is_private: user.is_private,
           followers: user.followers,
           following: user.following,
           gap: gap,
           media_post_total: user.media_post_total,
-          biography: user.biography,
+          biography: user.biography ?? null,
           is_mutual: user.is_mutual,
-          last_update: user.last_update
+          last_update: user.last_update ?? null,
+          gender: user.gender ?? null
         },
         data_statistics: {
           oldest_rank: oldestRankMap.get(user.id),
@@ -373,7 +420,29 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
           following_rank: followingRankMap.get(user.id),
           gap_rank: gapRankMap.get(user.id),
         },
-        relational_detail: relations
+        relational_detail: relations.map((rel: any) => {
+          const ownedSubrelationIds = user.subrelations.map(
+            (sub: any) => sub.id
+          )
+
+          const filteredSubrelations = rel.subrelations
+            .filter((sub: any) =>
+              ownedSubrelationIds.includes(sub.id)
+            )
+            .map((sub: any) => ({
+              subrelational_id: sub.id,
+              subrelational_name: sub.subrelational
+            }))
+
+          return {
+            id: rel.id,
+            relational: rel.relational,
+            text_color: rel.text_color,
+            bg_color: rel.bg_color,
+            border_color: rel.border_color,
+            subrelational_list: filteredSubrelations
+          }
+        })
       }
     })
 
