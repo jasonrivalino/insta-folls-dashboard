@@ -119,7 +119,7 @@ export const createInstagramData = async (req: Request, res: Response) => {
     if (!username) {
       return res.status(400).json({
         success: false,
-        message: 'Username and fullname are required'
+        message: 'Please provide a valid username.'
       })
     }
 

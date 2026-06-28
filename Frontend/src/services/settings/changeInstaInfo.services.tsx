@@ -21,7 +21,8 @@ export type InstagramUserCreatePayload = Omit<
 >;
 export const addInstagramUser = async (
   formData: InstagramUserCreatePayload,
-  relationalIds: number[]
+  relationalIds: number[],
+  subrelationalIds: number[]
 ): Promise<void> => {
   // Create Instagram user
   const userRes = await axios.post(
@@ -44,13 +45,24 @@ export const addInstagramUser = async (
       })
     )
   );
+
+  // Create subrelations (parallel)
+  await Promise.all(
+    subrelationalIds.map((subrelationalId) =>
+      axios.post(`${BACKEND_URL}/api/insta-and-subrelational-user/add`, {
+        insta_user_id: newInstaUserId,
+        subrelational_id: subrelationalId,
+      })
+    )
+  );
 };
 
 // Update Instagram main data
 export const updateInstagramUser = async (
   instaUserId: number,
   formData: InstagramUserCreatePayload,
-  selectedRelationIds: number[]
+  selectedRelationIds: number[],
+  selectedSubrelationalIds: number[]
 ) => {
   // Update main Instagram data
   await axios.put(
@@ -64,6 +76,8 @@ export const updateInstagramUser = async (
   });
   const currentRelations =
     users?.data[0]?.relational_detail?.map((r) => r.id) ?? [];
+  const currentSubrelations =
+    users?.data[0]?.relational_detail?.flatMap((r) => r.subrelational_list?.map((s) => s.subrelational_id) ?? []) ?? [];
 
   // Diff relations
   const relationsToAdd = selectedRelationIds.filter(
@@ -71,6 +85,14 @@ export const updateInstagramUser = async (
   );
   const relationsToDelete = currentRelations.filter(
     (id) => !selectedRelationIds.includes(id)
+  );
+
+  // Diff subrelations
+  const subrelationsToAdd = selectedSubrelationalIds.filter(
+    (id) => !currentSubrelations.includes(id)
+  );
+  const subrelationsToDelete = currentSubrelations.filter(
+    (id) => !selectedSubrelationalIds.includes(id)
   );
 
   // Execute ADD
@@ -90,6 +112,28 @@ export const updateInstagramUser = async (
         data: {
           insta_user_id: instaUserId,
           relational_id: relId,
+        },
+      })
+    )
+  );
+
+  // Execute ADD for subrelations
+  await Promise.all(
+    subrelationsToAdd.map((subrelId) =>
+      axios.post(`${BACKEND_URL}/api/insta-and-subrelational-user/add`, {
+        insta_user_id: instaUserId,
+        subrelational_id: subrelId,
+      })
+    )
+  );
+
+  // Execute DELETE for subrelations
+  await Promise.all(
+    subrelationsToDelete.map((subrelId) =>
+      axios.delete(`${BACKEND_URL}/api/insta-and-subrelational-user/delete`, {
+        data: {
+          insta_user_id: instaUserId,
+          subrelational_id: subrelId,
         },
       })
     )

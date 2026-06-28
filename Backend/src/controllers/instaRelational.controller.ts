@@ -196,6 +196,47 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       }
     }
 
+    // Input validation for subrelational_id parameter
+    const subrelationalIdParam = req.query.subrelational_id
+    let subrelationalId: number | null = null
+
+    if (subrelationalIdParam !== undefined) {
+      // Cannot use subrelational_id without relational_id
+      if (relationalIdParam === undefined) {
+        return res.status(400).json({
+          success: false,
+          message: 'subrelational_id requires relational_id'
+        })
+      }
+
+      subrelationalId = Number(subrelationalIdParam)
+
+      if (isNaN(subrelationalId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'subrelational_id must be a number'
+        })
+      }
+
+      // Only validate when not using the special value 0
+      if (subrelationalId !== 0) {
+        const validSubrelation = await prisma.subrelation_Status.findFirst({
+          where: {
+            id: subrelationalId,
+            relationsId: relationalId!
+          }
+        })
+
+        if (!validSubrelation) {
+          return res.status(400).json({
+            success: false,
+            message:
+              'subrelational_id does not belong to the specified relational_id'
+          })
+        }
+      }
+    }
+
     // Input validation for limit parameter
     const limitParam = req.query.limit
     let limit: number | undefined = undefined
@@ -274,6 +315,24 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
           id: relationalId
         }
       }
+
+      if (subrelationalId !== null) {
+        if (subrelationalId === 0) {
+          // User has NO subrelation at all
+          where.subrelations = {
+            none: {
+              relationsId: relationalId
+            }
+          }
+        } else {
+          // User has the requested subrelation
+          where.subrelations = {
+            some: {
+              id: subrelationalId
+            }
+          }
+        }
+      }
     }
 
     const relationsInclude = relationalId === 0
@@ -291,6 +350,9 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
           ...relationsInclude,
           include: {
             subrelations: {
+              where: subrelationalId
+                ? { id: subrelationalId }
+                : undefined,
               select: {
                 id: true,
                 subrelational: true,

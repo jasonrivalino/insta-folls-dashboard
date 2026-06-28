@@ -28,12 +28,12 @@ type SortState = {
 type FormMode = "idle" | "add" | "edit";
 
 // Icon component for sort indicator
-const SortIcon = ({ activeKey, order, column } : { activeKey: InstagramSortKey | null; order: SortOrder; column: InstagramSortKey; }) => {
+const SortIcon = ({ activeKey, order, column }: { activeKey: InstagramSortKey | null; order: SortOrder; column: InstagramSortKey; }) => {
   if (activeKey !== column || order === null) {
-      return <ListFilter size={14} strokeWidth={2} className="mb-0.5"/>;
-    }
-    return order === "asc" ? <FontAwesomeIcon icon={faCaretUp} size="lg" /> : <FontAwesomeIcon icon={faCaretDown} size="lg" className="mb-0.5"/>;
-  };
+    return <ListFilter size={14} strokeWidth={2} className="mb-0.5" />;
+  }
+  return order === "asc" ? <FontAwesomeIcon icon={faCaretUp} size="lg" /> : <FontAwesomeIcon icon={faCaretDown} size="lg" className="mb-0.5" />;
+};
 
 // Sortable Table Header component
 const SortableTh = ({ label, column, sort, onSort, thClass }: { label: string; column: InstagramSortKey; sort: SortState; onSort: (key: InstagramSortKey) => void; thClass: string; }) => (
@@ -61,6 +61,7 @@ export default function ChangeInstaInfo() {
 
   // Relational Filter State
   const [selectedRelationalIdFilter, setSelectedRelationalIdFilter] = useState<number | null>(null);
+  const [selectedSubrelationalIdFilter, setSelectedSubrelationalIdFilter] = useState<number | null>(null);
 
   // Form mode state
   const [formMode, setFormMode] = useState<FormMode>("idle");
@@ -105,6 +106,7 @@ export default function ChangeInstaInfo() {
           order: sort.order ?? undefined,
           search: searchQuery || undefined,
           relational_id: selectedRelationalIdFilter ?? undefined,
+          subrelational_id: selectedSubrelationalIdFilter ?? undefined,
         });
 
         if (data) {
@@ -117,19 +119,36 @@ export default function ChangeInstaInfo() {
       }
     };
     fetchUsers();
-  }, [sort.key, sort.order, searchQuery, selectedRelationalIdFilter]);
+  }, [sort.key, sort.order, searchQuery, selectedRelationalIdFilter, selectedSubrelationalIdFilter]);
 
   // Fetch get all relational data on component mount
-  const loadRelationalData = async () => {
+  const loadRelationSubrelationalData = async () => {
     try {
-      const res = await getRelationalDetails();
-      setRelationalList(res.data);
+      const [relationalRes, subrelationalRes] = await Promise.all([
+        getRelationalDetails(),
+        getSubrelationalList(),
+      ]);
+
+      setRelationalList(relationalRes.data);
+
+      // Group subrelations by relational_id
+      const grouped = subrelationalRes.data.reduce(
+        (acc: Record<number, SubRelationalDetail[]>, sub: SubRelationalDetail) => {
+          if (!acc[sub.relationsId]) {
+            acc[sub.relationsId] = [];
+          }
+          acc[sub.relationsId].push(sub);
+          return acc;
+        },
+        {}
+      );
+      setSubrelationalList(grouped);
     } catch (error) {
       console.error("Failed to load relational data:", error);
     }
   };
   useEffect(() => {
-    loadRelationalData();
+    loadRelationSubrelationalData();
   }, []);
 
   // Handle sorting logic
@@ -206,7 +225,7 @@ export default function ChangeInstaInfo() {
     setFormMode(mode);
 
     // Always load relational master
-    await loadRelationalData();
+    await loadRelationSubrelationalData();
 
     // Add Mode
     if (mode === "add") {
@@ -274,7 +293,7 @@ export default function ChangeInstaInfo() {
     try {
       if (formMode === "add") {
         // Add
-        await addInstagramUser(formData, selectedRelationIds);
+        await addInstagramUser(formData, selectedRelationIds, selectedSubrelationalIds);
 
         setResultMessage("Instagram user added successfully.");
       } else if (formMode === "edit" && selectedUserId) {
@@ -282,7 +301,8 @@ export default function ChangeInstaInfo() {
         await updateInstagramUser(
           selectedUserId,
           formData,
-          selectedRelationIds
+          selectedRelationIds,
+          selectedSubrelationalIds
         );
 
         setResultMessage("Instagram user updated successfully.");
@@ -408,7 +428,7 @@ export default function ChangeInstaInfo() {
           <h1 className="text-3xl font-bold text-gray-800">Settings - Change Insta Info</h1>
           <p className="text-sm text-gray-800">Manage and update Instagram user information here.</p>
         </div>
-        <div className="flex flex-row gap-4">
+        <div className="flex flex-row gap-3">
           <div className="flex flex-col gap-1.5 w-44">
             <span className="text-sm font-medium text-gray-700">Search Insta Username</span>
             <input
@@ -425,22 +445,52 @@ export default function ChangeInstaInfo() {
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
                         focus:outline-none focus:ring-2 focus:ring-blue-500
                         transition-all duration-150 shadow-sm bg-white"
-                value={selectedRelationalIdFilter ?? "all"}
-                onChange={(e) =>
-                  setSelectedRelationalIdFilter(
-                    e.target.value === "all" ? null : Number(e.target.value)
-                  )
-                }
-              >
+              value={selectedRelationalIdFilter ?? "all"}
+              onChange={(e) => {
+                const value = e.target.value === "all" ? null : Number(e.target.value);
+                setSelectedRelationalIdFilter(value);
+                setSelectedSubrelationalIdFilter(null);
+              }}
+            >
               <option value="all">All</option>
+              <option value="0">No Relation</option>
               {relationalList.map((rel) => (
                 <option key={rel.id} value={rel.id}>
                   {rel.relational}
                 </option>
               ))}
-              <option value="0">No Relation</option>
             </select>
           </div>
+          {/* Subrelational */}
+          {selectedRelationalIdFilter !== null && selectedRelationalIdFilter !== 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-gray-700">
+                Subrelational
+              </span>
+
+              <select
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                            focus:outline-none focus:ring-2 focus:ring-blue-500
+                            transition-all duration-150 shadow-sm bg-white"
+                value={selectedSubrelationalIdFilter ?? "all"}
+                onChange={(e) =>
+                  setSelectedSubrelationalIdFilter(
+                    e.target.value === "all" ? null : Number(e.target.value)
+                  )
+                }
+              >
+                <option value="all">All</option>
+                <option value="0">No Subrelation</option>
+                {(subrelationalList[selectedRelationalIdFilter] ?? []).map(
+                  (sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.subrelational}
+                    </option>
+                  )
+                )}
+              </select>
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Add New User</span>
             <div onClick={() => handleAddEditClick("add")}
@@ -481,61 +531,61 @@ export default function ChangeInstaInfo() {
                     </td>
                   </tr>
                 ) : (
-                    users.map((userData, index) => {
-                      const user = userData.instagram_detail;
+                  users.map((userData, index) => {
+                    const user = userData.instagram_detail;
                     return (
                       <tr
                         key={user.id}
                         className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-colors"
                       >
-                          <td className={tdClass}>{index + 1}</td>
-                          <td className="px-4 py-2 text-sm font-medium text-center whitespace-nowrap">
-                            {user.username ? (
-                              <a
-                                href={`https://www.instagram.com/${user.username}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                              >
-                                {user.username}
-                              </a>
-                            ) : "-"}
-                          </td>
-                          <td className={tdClass}>
-                            {new Date(user.last_update).toLocaleString("en-GB", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: false,
-                              })
-                              .replace(/\b([a-z]{3})\b/, (m) => m[0].toUpperCase() + m.slice(1))}
-                          </td>
-                          <td className={tdClass}>
-                              <div className="flex flex-row justify-center items-center gap-1.5">
-                                  {/* Edit Button */}
-                                  <button
-                                    className="p-1 rounded border-2 border-gray-300 bg-blue-50 hover:bg-blue-100 text-blue-500 hover:text-blue-700 font-semibold shadow-sm cursor-pointer"
-                                    title="Edit"
-                                    onClick={() => handleAddEditClick("edit", user.id)}
-                                  >
-                                    <FiEdit2 size={18} />
-                                  </button>
+                        <td className={tdClass}>{index + 1}</td>
+                        <td className="px-4 py-2 text-sm font-medium text-center whitespace-nowrap">
+                          {user.username ? (
+                            <a
+                              href={`https://www.instagram.com/${user.username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {user.username}
+                            </a>
+                          ) : "-"}
+                        </td>
+                        <td className={tdClass}>
+                          {new Date(user.last_update).toLocaleString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })
+                            .replace(/\b([a-z]{3})\b/, (m) => m[0].toUpperCase() + m.slice(1))}
+                        </td>
+                        <td className={tdClass}>
+                          <div className="flex flex-row justify-center items-center gap-1.5">
+                            {/* Edit Button */}
+                            <button
+                              className="p-1 rounded border-2 border-gray-300 bg-blue-50 hover:bg-blue-100 text-blue-500 hover:text-blue-700 font-semibold shadow-sm cursor-pointer"
+                              title="Edit"
+                              onClick={() => handleAddEditClick("edit", user.id)}
+                            >
+                              <FiEdit2 size={18} />
+                            </button>
 
-                                  {/* Delete Button */}
-                                  <button
-                                      className="p-1 rounded border-2 border-gray-300 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 font-semibold shadow-sm cursor-pointer"
-                                      title="Delete"
-                                      onClick={() => {
-                                        setSelectedUserId(user.id);
-                                        setShowDeletePopup(true);
-                                      }}
-                                  >
-                                      <FiTrash2 size={18} />
-                                  </button>
-                              </div>
-                          </td>
+                            {/* Delete Button */}
+                            <button
+                              className="p-1 rounded border-2 border-gray-300 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 font-semibold shadow-sm cursor-pointer"
+                              title="Delete"
+                              onClick={() => {
+                                setSelectedUserId(user.id);
+                                setShowDeletePopup(true);
+                              }}
+                            >
+                              <FiTrash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     );
                   })
@@ -560,7 +610,7 @@ export default function ChangeInstaInfo() {
               </h2>
 
               <div className="bg-blue-50/80 p-3 rounded-lg flex flex-col gap-3 border border-blue-200">
-                <div className= "p-3 rounded-lg text-sm font-medium shadow-sm border border-gray-700/50 bg-[#EEEEEE] text-gray-700 flex flex-col gap-3 max-h-[60.5vh] overflow-y-auto">
+                <div className="p-3 rounded-lg text-sm font-medium shadow-sm border border-gray-700/50 bg-[#EEEEEE] text-gray-700 flex flex-col gap-3 max-h-[60.5vh] overflow-y-auto">
                   {/* PKDefInsta, Username, Fullname, and Is Private & Mutual */}
                   <div className="grid grid-cols-3 gap-3">
                     {/* PKDefInsta */}
@@ -578,15 +628,14 @@ export default function ChangeInstaInfo() {
                         }
                         disabled={formMode === "edit"}
                         className={`border rounded-lg px-2 py-1.5 text-sm shadow-sm
-                          ${
-                            formMode === "edit"
-                              ? "bg-gray-100 border-gray-300 cursor-not-allowed text-gray-500"
-                              : "bg-white border-gray-700/50"
+                          ${formMode === "edit"
+                            ? "bg-gray-100 border-gray-300 cursor-not-allowed text-gray-500"
+                            : "bg-white border-gray-700/50"
                           }
                         `}
                       />
                     </div>
-                    
+
                     {/* Username */}
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center justify-between">
@@ -617,11 +666,10 @@ export default function ChangeInstaInfo() {
                           setFormData({ ...formData, username: e.target.value })
                         }
                         disabled={formMode === "edit" && !canEditUsername}
-                        className={`flex-1 border rounded-lg px-2 py-1.5 text-sm shadow-sm ${
-                          formMode === "edit" && !canEditUsername
+                        className={`flex-1 border rounded-lg px-2 py-1.5 text-sm shadow-sm ${formMode === "edit" && !canEditUsername
                             ? "bg-gray-100 border-gray-300 cursor-not-allowed text-gray-500"
                             : "bg-white border-gray-700/50"
-                        }`}
+                          }`}
                       />
                     </div>
 
@@ -633,7 +681,7 @@ export default function ChangeInstaInfo() {
                         value={formData.fullname}
                         onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
                         className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
-                    />
+                      />
                     </div>
                   </div>
 
@@ -667,7 +715,7 @@ export default function ChangeInstaInfo() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     {/* Boolean Checkbox */}
                     <div className="flex flex-col gap-1 w-full">
@@ -773,11 +821,10 @@ export default function ChangeInstaInfo() {
                           return (
                             <div
                               key={relationId}
-                              className={`rounded-lg shadow-sm border border-gray-300 p-2.5 flex flex-col gap-1.5 ${
-                                (subrelationalList[relationId] ?? []).length === 0
+                              className={`rounded-lg shadow-sm border border-gray-300 p-2.5 flex flex-col gap-1.5 ${(subrelationalList[relationId] ?? []).length === 0
                                   ? "bg-red-100"
                                   : "bg-green-100/50"
-                              }`}
+                                }`}
                             >
                               {/* Relational Title */}
                               <div>
@@ -855,7 +902,7 @@ export default function ChangeInstaInfo() {
           )}
         </div>
       </div>
-      
+
       {/* Delete Confirmation */}
       {showDeletePopup && selectedUserId && (
         <DeleteConfirmationPopup
@@ -865,7 +912,7 @@ export default function ChangeInstaInfo() {
           onClose={() => setShowDeletePopup(false)}
         />
       )}
-      
+
       {/* Action Result Popup */}
       {resultPopupOpen && actionSuccess !== null && (
         <ActionResultPopup
