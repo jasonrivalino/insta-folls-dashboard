@@ -38,9 +38,10 @@ export interface RelationalDetailResponse {
 export interface RelationalDetail {
   id: number;
   relational: string;
-  bg_color: string;
   text_color: string;
+  bg_color: string;
   border_color: string;
+  subrelational_list: SubRelationalList[];
 }
 
 // Subrelational Detail Model
@@ -53,6 +54,10 @@ export interface SubRelationalDetail {
   id: number;
   subrelational: string;
   relationsId: number;
+}
+export interface SubRelationalList {
+  subrelational_id: number;
+  subrelational_name: string;
 }
 
 // General Statistics Model

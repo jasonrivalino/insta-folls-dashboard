@@ -1,6 +1,7 @@
-import type { InstaRelationalData, RelationalDetail } from "../../models/table.models";
+import type { InstaRelationalData, RelationalDetail, SubRelationalDetail } from "../../models/table.models";
 
 import { getInstagramUsers } from "../../services/dataVisualization/instaUserList.services";
+import { getSubrelationalList } from "../../services/settings/subrelationalList.services";
 import { getRelationalDetails, addInstagramUser, updateInstagramUser, deleteInstagramUser } from "../../services/settings/changeInstaInfo.services";
 
 import DeleteConfirmationPopup from "../../components/deleteConfirmationPopup";
@@ -76,9 +77,14 @@ export default function ChangeInstaInfo() {
     biography: "",
     is_mutual: false,
   });
+  const [canEditUsername, setCanEditUsername] = useState(false);
   // Relational data
   const [relationalList, setRelationalList] = useState<RelationalDetail[]>([]);
   const [selectedRelationIds, setSelectedRelationIds] = useState<number[]>([]);
+
+  // Subrelational data
+  const [subrelationalList, setSubrelationalList] = useState<Record<number, SubRelationalDetail[]>>({});
+  const [selectedSubrelationalIds, setSelectedSubrelationalIds] = useState<number[]>([]);
 
   // Delete popup state
   const [showDeletePopup, setShowDeletePopup] = useState(false);
@@ -89,19 +95,6 @@ export default function ChangeInstaInfo() {
   const [resultPopupOpen, setResultPopupOpen] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<boolean | null>(null);
   const [resultMessage, setResultMessage] = useState<string>("");
-
-  // Fetch relational data on component mount
-  useEffect(() => {
-    const loadRelationalData = async () => {
-      try {
-        const res = await getRelationalDetails();
-        setRelationalList(res.data);
-      } catch (error) {
-        console.error("Failed to load relational data:", error);
-      }
-    };
-    loadRelationalData();
-  }, []);
 
   // Fetch users on component mount and when isPrivate changes
   useEffect(() => {
@@ -126,6 +119,19 @@ export default function ChangeInstaInfo() {
     fetchUsers();
   }, [sort.key, sort.order, searchQuery, selectedRelationalIdFilter]);
 
+  // Fetch get all relational data on component mount
+  const loadRelationalData = async () => {
+    try {
+      const res = await getRelationalDetails();
+      setRelationalList(res.data);
+    } catch (error) {
+      console.error("Failed to load relational data:", error);
+    }
+  };
+  useEffect(() => {
+    loadRelationalData();
+  }, []);
+
   // Handle sorting logic
   const handleSortClick = (key: InstagramSortKey) => {
     setSort((prev) => {
@@ -135,24 +141,61 @@ export default function ChangeInstaInfo() {
       return { key, order: "asc" };
     });
   };
-  
-  // Get all relational details on component mount
-  const loadRelationalData = async () => {
-    try {
-      const res = await getRelationalDetails();
-      setRelationalList(res.data);
-    } catch (error) {
-      console.error("Failed to load relational data:", error);
-    }
-  };
 
   // Get selected user based on Id
   const fetchSelectedUserById = async (id: number) => {
     const data = await getInstagramUsers({
       insta_user_id: id,
     });
-
     return data ? data.data[0] : null;
+  };
+
+  // Handle relation checkbox change
+  const handleRelationChange = async (relationId: number) => {
+    const isSelected = selectedRelationIds.includes(relationId);
+    if (isSelected) {
+      const updatedRelations = selectedRelationIds.filter(
+        (id) => id !== relationId
+      );
+      setSelectedRelationIds(updatedRelations);
+      setSubrelationalList((prev) => {
+        const copy = { ...prev };
+        delete copy[relationId];
+        return copy;
+      });
+      console.log(`Relation ID ${relationId} deselected. Updated selectedRelationIds:`, updatedRelations);
+      return;
+    }
+    const updatedRelations = [...selectedRelationIds, relationId];
+    setSelectedRelationIds(updatedRelations);
+
+    try {
+      const res = await getSubrelationalList(`?relationsId=${relationId}`);
+      setSubrelationalList((prev) => ({
+        ...prev,
+        [relationId]: res.data,
+      }));
+    } catch (error) {
+      console.error("Failed to load subrelational data:", error);
+    }
+  };
+
+  // Handle subrelation checkbox change
+  const loadSubrelationData = async (relationIds: number[]) => {
+    const subrelationMap: Record<number, SubRelationalDetail[]> = {};
+    try {
+      await Promise.all(
+        relationIds.map(async (relationId) => {
+          const res = await getSubrelationalList(
+            `?relationsId=${relationId}`
+          );
+          subrelationMap[relationId] = res.data;
+        })
+      );
+      setSubrelationalList(subrelationMap);
+    } catch (error) {
+      console.error("Failed to load subrelational data:", error);
+    }
   };
 
   // Handle add / edit click
@@ -167,6 +210,7 @@ export default function ChangeInstaInfo() {
 
     // Add Mode
     if (mode === "add") {
+      setCanEditUsername(false);
       setSelectedUserId(null);
       setFormData({
         pk_def_insta: "0",
@@ -181,12 +225,15 @@ export default function ChangeInstaInfo() {
         is_mutual: false,
       });
       setSelectedRelationIds([]);
+      setSubrelationalList({});
+      setSelectedSubrelationalIds([]);
       return;
     }
 
     // Edit Mode
     if (!userId) return;
 
+    setCanEditUsername(false);
     setSelectedUserId(userId);
 
     const result = await fetchSelectedUserById(userId);
@@ -209,7 +256,15 @@ export default function ChangeInstaInfo() {
     });
 
     // Set selected relations
-    setSelectedRelationIds(relations.map((r) => r.id));
+    const selectedRelations = relations.map((r) => r.id);
+    setSelectedRelationIds(selectedRelations);
+
+    await loadSubrelationData(selectedRelations);
+
+    const selectedSubrelations = relations.flatMap((relation) =>
+      relation.subrelational_list.map((sub) => sub.subrelational_id)
+    );
+    setSelectedSubrelationalIds(selectedSubrelations);
   };
 
   // Handle add / edit Instagram user
@@ -534,12 +589,25 @@ export default function ChangeInstaInfo() {
                     
                     {/* Username */}
                     <div className="flex flex-col gap-1">
-                      <h4 className="text-base font-medium text-gray-700">
-                        Username:
-                        {formMode === "add" && (
-                          <span className="text-red-500 ml-1">*</span>
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-base font-medium text-gray-700">
+                          Username:
+                          {formMode === "add" && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
+                        </h4>
+
+                        {formMode === "edit" && (
+                          <label className="flex items-center gap-1 text-sm text-gray-600 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={canEditUsername}
+                              onChange={(e) => setCanEditUsername(e.target.checked)}
+                            />
+                            Edit
+                          </label>
                         )}
-                      </h4>
+                      </div>
 
                       <input
                         required={formMode === "add"}
@@ -548,7 +616,12 @@ export default function ChangeInstaInfo() {
                         onChange={(e) =>
                           setFormData({ ...formData, username: e.target.value })
                         }
-                        className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
+                        disabled={formMode === "edit" && !canEditUsername}
+                        className={`flex-1 border rounded-lg px-2 py-1.5 text-sm shadow-sm ${
+                          formMode === "edit" && !canEditUsername
+                            ? "bg-gray-100 border-gray-300 cursor-not-allowed text-gray-500"
+                            : "bg-white border-gray-700/50"
+                        }`}
                       />
                     </div>
 
@@ -668,29 +741,95 @@ export default function ChangeInstaInfo() {
                   {/* Relational Checkboxes */}
                   <div className="flex flex-col gap-1">
                     <h4 className="text-base font-medium text-gray-700">Relational List:</h4>
-                    <div className="flex flex-wrap content-start gap-2 bg-white px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50 h-34 overflow-y-auto">
+                    <div className="flex flex-wrap content-start gap-2 bg-white p-2.5 rounded-lg shadow-sm border border-gray-700/50 h-34 overflow-y-auto">
                       {relationalList.map((rel) => (
                         <label
                           key={rel.id}
                           className="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer text-xs font-medium h-fit"
-                          style={{ backgroundColor: rel.bg_color, color: rel.text_color }}
+                          style={{ backgroundColor: rel.bg_color, color: rel.text_color, border: `2px solid ${rel.border_color}` }}
                         >
                           <input
                             type="checkbox"
                             checked={selectedRelationIds.includes(rel.id)}
-                            onChange={() =>
-                              setSelectedRelationIds((prev) =>
-                                prev.includes(rel.id)
-                                  ? prev.filter((id) => id !== rel.id)
-                                  : [...prev, rel.id]
-                              )
-                            }
+                            onChange={() => handleRelationChange(rel.id)}
                           />
                           {rel.relational}
                         </label>
                       ))}
                     </div>
                   </div>
+
+                  {/* Subrelational Preview */}
+                  {selectedRelationIds.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <h4 className="text-base font-medium text-gray-700">
+                        Subrelational Preview
+                      </h4>
+
+                      <div className="bg-white px-2.5 py-3 rounded-lg shadow-sm border border-gray-700/50 flex flex-col gap-3 max-h-[40vh] overflow-y-auto">
+                        {selectedRelationIds.map((relationId) => {
+                          const relation = relationalList.find((r) => r.id === relationId);
+                          if (!relation) return null;
+                          return (
+                            <div
+                              key={relationId}
+                              className={`rounded-lg shadow-sm border border-gray-300 p-2.5 flex flex-col gap-1.5 ${
+                                (subrelationalList[relationId] ?? []).length === 0
+                                  ? "bg-red-100"
+                                  : "bg-green-100/50"
+                              }`}
+                            >
+                              {/* Relational Title */}
+                              <div>
+                                <h5 className="text-sm font-semibold text-gray-700">
+                                  {relation.relational}
+                                </h5>
+                              </div>
+
+                              {/* Subrelational List */}
+                              <div>
+                                {(subrelationalList[relationId] ?? []).length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {subrelationalList[relationId].map((sub: SubRelationalDetail) => (
+                                      <label
+                                        key={sub.id}
+                                        className="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer text-xs font-medium h-fit"
+                                        style={{
+                                          backgroundColor: relation.bg_color,
+                                          color: relation.text_color,
+                                        }}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedSubrelationalIds.includes(sub.id)}
+                                          onChange={(e) => {
+                                            console.log("Subrelational Checkbox Change:", sub.id, e.target.checked);
+                                            if (e.target.checked) {
+                                              setSelectedSubrelationalIds((prev) => [...prev, sub.id]);
+                                            }
+                                            else {
+                                              setSelectedSubrelationalIds((prev) => prev.filter((id) => id !== sub.id));
+                                            }
+                                            console.log("Updated Selected Subrelational IDs:", selectedSubrelationalIds);
+                                          }}
+                                        />
+                                        {sub.subrelational}
+                                      </label>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">
+                                    This relation doesn't have any subrelational. Add one on the{" "}
+                                    <span className="font-medium">Relational List</span> page.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Save */}
