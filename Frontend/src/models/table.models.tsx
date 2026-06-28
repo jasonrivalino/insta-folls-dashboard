@@ -25,6 +25,7 @@ export interface InstagramUser {
   biography: string
   is_mutual: boolean
   last_update: string
+  gender: string
 }
 
 

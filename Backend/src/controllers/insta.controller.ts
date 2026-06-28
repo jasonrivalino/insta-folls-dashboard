@@ -238,11 +238,12 @@ export const updateInstagramData = async (req: Request, res: Response) => {
       })
     }
     
-    const { fullname, is_private, media_post_total,
+    const { username, fullname, is_private, media_post_total,
             followers, following, biography, gender, is_mutual } = req.body
     const updateData: any = {}
 
     // Only update fields that are provided
+    if (username !== undefined) updateData.username = username
     if (fullname !== undefined) updateData.fullname = fullname
     if (typeof is_private === 'boolean') updateData.is_private = is_private
     if (media_post_total !== undefined) updateData.media_post_total = media_post_total

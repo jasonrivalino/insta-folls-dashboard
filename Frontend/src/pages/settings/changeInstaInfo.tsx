@@ -68,6 +68,7 @@ export default function ChangeInstaInfo() {
     pk_def_insta: "0",
     username: "",
     fullname: "",
+    gender: "",
     is_private: false,
     media_post_total: 0,
     followers: 0,
@@ -171,6 +172,7 @@ export default function ChangeInstaInfo() {
         pk_def_insta: "0",
         username: "",
         fullname: "",
+        gender: "",
         is_private: false,
         media_post_total: 0,
         followers: 0,
@@ -197,6 +199,7 @@ export default function ChangeInstaInfo() {
       pk_def_insta: user.pk_def_insta,
       username: user.username,
       fullname: user.fullname ?? "",
+      gender: user.gender ?? "",
       is_private: user.is_private,
       media_post_total: user.media_post_total ?? 0,
       followers: user.followers ?? 0,
@@ -251,6 +254,7 @@ export default function ChangeInstaInfo() {
         pk_def_insta: "0",
         username: "",
         fullname: "",
+        gender: "",
         is_private: false,
         media_post_total: 0,
         followers: 0,
@@ -500,160 +504,192 @@ export default function ChangeInstaInfo() {
                 {formMode === "add" ? "Add New Instagram User" : "Edit Instagram User - " + formData.username}
               </h2>
 
-              <div className="bg-[#EEEEEE] p-3 rounded-lg flex flex-col gap-3">
-                {/* PKDefInsta, Username, Fullname, and Is Private & Mutual */}
-                <div className="flex flex-row gap-3">
-                  {/* PKDefInsta */}
-                  <div className="flex flex-col gap-1 w-1/4">
-                    <h4 className="text-base font-medium text-gray-700">
-                      PK Def Insta:
-                    </h4>
-                    <input
-                      required={formMode === "add"}
-                      placeholder="PK Def Insta"
-                      type="number"
-                      value={formData.pk_def_insta.toString()}
-                      onChange={(e) =>
-                        setFormData({ ...formData, pk_def_insta: e.target.value })
-                      }
-                      disabled={formMode === "edit"}
-                      className={`border rounded-lg px-2 py-1.5 text-sm shadow-sm
-                        ${
-                          formMode === "edit"
-                            ? "bg-gray-100 border-gray-300 cursor-not-allowed text-gray-500"
-                            : "bg-white border-gray-700/50"
+              <div className="bg-blue-50/80 p-3 rounded-lg flex flex-col gap-3 border border-blue-200">
+                <div className= "p-3 rounded-lg text-sm font-medium shadow-sm border border-gray-700/50 bg-[#EEEEEE] text-gray-700 flex flex-col gap-3 max-h-[60.5vh] overflow-y-auto">
+                  {/* PKDefInsta, Username, Fullname, and Is Private & Mutual */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {/* PKDefInsta */}
+                    <div className="flex flex-col gap-1">
+                      <h4 className="text-base font-medium text-gray-700">
+                        PK Def Insta:
+                      </h4>
+                      <input
+                        required={formMode === "add"}
+                        placeholder="PK Def Insta"
+                        type="number"
+                        value={formData.pk_def_insta.toString()}
+                        onChange={(e) =>
+                          setFormData({ ...formData, pk_def_insta: e.target.value })
                         }
-                      `}
+                        disabled={formMode === "edit"}
+                        className={`border rounded-lg px-2 py-1.5 text-sm shadow-sm
+                          ${
+                            formMode === "edit"
+                              ? "bg-gray-100 border-gray-300 cursor-not-allowed text-gray-500"
+                              : "bg-white border-gray-700/50"
+                          }
+                        `}
+                      />
+                    </div>
+                    
+                    {/* Username */}
+                    <div className="flex flex-col gap-1">
+                      <h4 className="text-base font-medium text-gray-700">
+                        Username:
+                        {formMode === "add" && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </h4>
+
+                      <input
+                        required={formMode === "add"}
+                        placeholder="Insta Username"
+                        value={formData.username}
+                        onChange={(e) =>
+                          setFormData({ ...formData, username: e.target.value })
+                        }
+                        className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
+                      />
+                    </div>
+
+                    {/* Fullname */}
+                    <div className="flex flex-col gap-1">
+                      <h4 className="text-base font-medium text-gray-700">Fullname:</h4>
+                      <input
+                        placeholder="Insta Fullname"
+                        value={formData.fullname}
+                        onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
+                        className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
                     />
+                    </div>
+                  </div>
+
+                  {/* Numbers */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="flex flex-col gap-1 w-full">
+                      <h4 className="text-base font-medium text-gray-700">Followers:</h4>
+                      <input type="number" placeholder="Followers"
+                        min={0}
+                        value={formData.followers}
+                        onChange={(e) => setFormData({ ...formData, followers: +e.target.value })}
+                        className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 w-full">
+                      <h4 className="text-base font-medium text-gray-700">Following:</h4>
+                      <input type="number" placeholder="Following"
+                        min={0}
+                        value={formData.following}
+                        onChange={(e) => setFormData({ ...formData, following: +e.target.value })}
+                        className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 w-full">
+                      <h4 className="text-base font-medium text-gray-700">Media Posts:</h4>
+                      <input type="number" placeholder="Media Total"
+                        min={0}
+                        value={formData.media_post_total}
+                        onChange={(e) => setFormData({ ...formData, media_post_total: +e.target.value })}
+                        className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
+                      />
+                    </div>
                   </div>
                   
-                  {/* Username */}
-                  <div className="flex flex-col gap-1 w-1/4">
-                    <h4 className="text-base font-medium text-gray-700">
-                      Username:
-                      {formMode === "add" && (
-                        <span className="text-red-500 ml-1">*</span>
-                      )}
-                    </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Boolean Checkbox */}
+                    <div className="flex flex-col gap-1 w-full">
+                      <h4 className="text-base font-medium text-gray-700">Gender</h4>
+                      <div className="flex flex-col gap-1 justify-end bg-white px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="Male"
+                            checked={formData.gender === "Male"}
+                            onChange={(e) =>
+                              setFormData({ ...formData, gender: e.target.value })
+                            }
+                          />
+                          Male
+                        </label>
 
-                    <input
-                      required={formMode === "add"}
-                      placeholder="Insta Username"
-                      value={formData.username}
-                      onChange={(e) =>
-                        setFormData({ ...formData, username: e.target.value })
-                      }
-                      disabled={formMode === "edit"}
-                      className={`border rounded-lg px-2 py-1.5 text-sm shadow-sm
-                        ${
-                          formMode === "edit"
-                            ? "bg-gray-100 border-gray-300 cursor-not-allowed text-gray-500"
-                            : "bg-white border-gray-700/50"
-                        }
-                      `}
-                    />
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="Female"
+                            checked={formData.gender === "Female"}
+                            onChange={(e) =>
+                              setFormData({ ...formData, gender: e.target.value })
+                            }
+                          />
+                          Female
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Boolean Checkbox */}
+                    <div className="flex flex-col gap-1 w-full">
+                      <h4 className="text-base font-medium text-gray-700">Private & Mutual</h4>
+                      <div className="flex flex-col gap-1 justify-end bg-white px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={formData.is_private}
+                            onChange={(e) => setFormData({ ...formData, is_private: e.target.checked })}
+                          />
+                          Is Private
+                        </label>
+
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={formData.is_mutual}
+                            onChange={(e) => setFormData({ ...formData, is_mutual: e.target.checked })}
+                          />
+                          Is Mutual
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Fullname */}
-                  <div className="flex flex-col gap-1 w-1/4">
-                    <h4 className="text-base font-medium text-gray-700">Fullname:</h4>
-                    <input
-                      placeholder="Insta Fullname"
-                      value={formData.fullname}
-                      onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
-                      className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
-                  />
-                  </div>
-
-                  {/* Boolean Checkbox */}
-                  <div className="flex flex-col gap-1 justify-end bg-white px-2.5 py-2 rounded-lg shadow-sm w-2/5 border border-gray-700/50">
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={formData.is_private}
-                        onChange={(e) => setFormData({ ...formData, is_private: e.target.checked })}
-                      />
-                      Is Private
-                    </label>
-
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={formData.is_mutual}
-                        onChange={(e) => setFormData({ ...formData, is_mutual: e.target.checked })}
-                      />
-                      Is Mutual
-                    </label>
-                  </div>
-                </div>
-
-                {/* Numbers */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="flex flex-col gap-1 w-full">
-                    <h4 className="text-base font-medium text-gray-700">Followers:</h4>
-                    <input type="number" placeholder="Followers"
-                      min={0}
-                      value={formData.followers}
-                      onChange={(e) => setFormData({ ...formData, followers: +e.target.value })}
+                  {/* Biography */}
+                  <div className="flex flex-col gap-1">
+                    <h4 className="text-base font-medium text-gray-700">Biography:</h4>
+                    <textarea
+                      rows={3}
+                      placeholder="Biography"
+                      value={formData.biography}
+                      onChange={(e) => setFormData({ ...formData, biography: e.target.value })}
                       className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
                     />
                   </div>
-                  <div className="flex flex-col gap-1 w-full">
-                    <h4 className="text-base font-medium text-gray-700">Following:</h4>
-                    <input type="number" placeholder="Following"
-                      min={0}
-                      value={formData.following}
-                      onChange={(e) => setFormData({ ...formData, following: +e.target.value })}
-                      className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1 w-full">
-                    <h4 className="text-base font-medium text-gray-700">Media Posts:</h4>
-                    <input type="number" placeholder="Media Total"
-                      min={0}
-                      value={formData.media_post_total}
-                      onChange={(e) => setFormData({ ...formData, media_post_total: +e.target.value })}
-                      className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
-                    />
-                  </div>
-                </div>
 
-                {/* Biography */}
-                <div className="flex flex-col gap-1">
-                  <h4 className="text-base font-medium text-gray-700">Biography:</h4>
-                  <textarea
-                    rows={3}
-                    placeholder="Biography"
-                    value={formData.biography}
-                    onChange={(e) => setFormData({ ...formData, biography: e.target.value })}
-                    className="border border-gray-700/50 rounded-lg px-2 py-1.5 text-sm bg-white shadow-sm"
-                  />
-                </div>
-
-                {/* Relational Checkboxes */}
-                <div className="flex flex-col gap-1">
-                  <h4 className="text-base font-medium text-gray-700">Relational List:</h4>
-                  <div className="flex flex-wrap content-start gap-2 bg-white px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50 h-34 overflow-y-auto">
-                    {relationalList.map((rel) => (
-                      <label
-                        key={rel.id}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer text-xs font-medium h-fit"
-                        style={{ backgroundColor: rel.bg_color, color: rel.text_color }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedRelationIds.includes(rel.id)}
-                          onChange={() =>
-                            setSelectedRelationIds((prev) =>
-                              prev.includes(rel.id)
-                                ? prev.filter((id) => id !== rel.id)
-                                : [...prev, rel.id]
-                            )
-                          }
-                        />
-                        {rel.relational}
-                      </label>
-                    ))}
+                  {/* Relational Checkboxes */}
+                  <div className="flex flex-col gap-1">
+                    <h4 className="text-base font-medium text-gray-700">Relational List:</h4>
+                    <div className="flex flex-wrap content-start gap-2 bg-white px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50 h-34 overflow-y-auto">
+                      {relationalList.map((rel) => (
+                        <label
+                          key={rel.id}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer text-xs font-medium h-fit"
+                          style={{ backgroundColor: rel.bg_color, color: rel.text_color }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedRelationIds.includes(rel.id)}
+                            onChange={() =>
+                              setSelectedRelationIds((prev) =>
+                                prev.includes(rel.id)
+                                  ? prev.filter((id) => id !== rel.id)
+                                  : [...prev, rel.id]
+                              )
+                            }
+                          />
+                          {rel.relational}
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
