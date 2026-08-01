@@ -15,6 +15,7 @@ export const getRelationalList = async (): Promise<RelationalDetailResponse> => 
 export type RelationalPayload = Omit<
   RelationalDetail,
   | "id"
+  | "subrelational_list"
 >;
 
 // Service to add a new Relational Status
