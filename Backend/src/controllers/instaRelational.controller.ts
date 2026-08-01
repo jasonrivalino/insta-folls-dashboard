@@ -1,3 +1,4 @@
+import { getMedian } from '../utils/getmedian'
 import { serializeBigInt } from '../utils/serializebigint'
 import { Request, Response } from 'express'
 
@@ -251,6 +252,26 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       }
     }
 
+    // Input validation for gender parameter
+    const genderParam = req.query.gender
+    const lowercaseGender = typeof genderParam === 'string' ? genderParam.toLowerCase() : undefined
+
+    if (lowercaseGender !== undefined) {
+      const validGenders = ['male', 'female', 'unknown', 'not_specified']
+      if (!validGenders.includes(lowercaseGender)) {
+        return res.status(400).json({
+          success: false,
+          message: 'gender must be one of male, female, unknown, or not specified'
+        })
+      }
+    }
+
+    if (lowercaseGender === 'not_specified') {
+      where.gender = null
+    } else if (lowercaseGender !== undefined) {
+      where.gender = lowercaseGender.charAt(0).toUpperCase() + lowercaseGender.slice(1)
+    }
+
     // Extract sort and filter query parameters
     const { sortBy, order = 'desc', is_private, is_mutual, search } = req.query
 
@@ -407,14 +428,18 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
       return sum
     }, 0)
 
+    const followersArray = rawData.map(u => u.followers ?? 0)
+    const followingArray = rawData.map(u => u.following ?? 0)
+
     const generalStatistics = {
       total_data: totalData,
       global_total_data: globalTotalData,
+      median_followers: getMedian(followersArray),
+      median_following: getMedian(followingArray),
       average_followers: totalData ? Math.round(totalFollowers / totalData) : 0,
       average_following: totalData ? Math.round(totalFollowing / totalData) : 0,
       average_gap: totalData ? Math.round(totalGap / totalData) : 0
     }
-
 
     // Prepare sorted ID lists
     const toRankMap = (ids: number[]) =>
