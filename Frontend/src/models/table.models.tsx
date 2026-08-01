@@ -64,6 +64,8 @@ export interface SubRelationalList {
 export interface GeneralStatistics {
   total_data: number;
   global_total_data: number;
+  median_followers: number;
+  median_following: number;
   average_followers: number;
   average_following: number;
   average_gap: number;

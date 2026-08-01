@@ -9,6 +9,7 @@ export type InstagramUserQuery = {
   is_private?: boolean;
   is_mutual?: boolean;
   search?: string;
+  gender?: "male" | "female" | "unknown" | "not_specified";
   insta_user_id?: number;
   relational_id?: number;
   subrelational_id?: number;

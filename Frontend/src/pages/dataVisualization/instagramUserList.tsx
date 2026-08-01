@@ -1,7 +1,8 @@
 import { getInstagramUsers } from "../../services/dataVisualization/instaUserList.services";
-import type { GeneralStatistics, InstaRelationalData, RelationalDetail, TableData } from "../../models/table.models";
+import { getSubrelationalList } from "../../services/settings/subrelationalList.services";
+import type { GeneralStatistics, InstaRelationalData, RelationalDetail, SubRelationalDetail, TableData } from "../../models/table.models";
 import { useEffect, useState, useRef } from "react";
-import type React from "react";
+import React from "react";
 import * as XLSX from "xlsx";
 
 import { ArrowUpDown, ListFilter } from "lucide-react";
@@ -21,6 +22,7 @@ type InstagramSortKey =
   | "gap"
   | "media_post_total";
 
+type GenderFilter = 'male' | 'female' | 'unknown' | 'not_specified' | undefined;
 type SortOrder = "asc" | "desc" | null;
 
 type SortState = {
@@ -53,6 +55,7 @@ const SortableTh = ({ label, column, sort, onSort, thClass }: { label: string; c
 export default function InstagramUserList() {
   const [users, setUsers] = useState<InstaRelationalData[]>([]);
   const [stats, setStats] = useState<GeneralStatistics | null>(null)
+  const [genderSelect, setGenderSelect] = useState<GenderFilter>(undefined);
   const [isPrivate, setIsPrivate] = useState<boolean | undefined>(undefined);
   const [isMutual, setIsMutual] = useState<boolean | undefined>(undefined);
   const [sort, setSort] = useState<SortState>({
@@ -74,6 +77,10 @@ export default function InstagramUserList() {
   // Relational Filter State
   const [relationalList, setRelationalList] = useState<RelationalDetail[]>([]);
   const [selectedRelationalId, setSelectedRelationalId] = useState<number | null>(null);
+  
+  // Subrelational Filter State
+  const [subrelationalList, setSubrelationalList] = useState<Record<number, SubRelationalDetail[]>>({});
+  const [selectedSubrelationalId, setSelectedSubrelationalId] = useState<number | null>(null);
 
   // Handle data fetching
   useEffect(() => {
@@ -93,9 +100,11 @@ export default function InstagramUserList() {
   useEffect(() => {
     const fetchUsers = async () => {
       const data = await getInstagramUsers({
+        gender: genderSelect,
         is_private: isPrivate,
         is_mutual: isMutual,
         relational_id: selectedRelationalId ?? undefined,
+        subrelational_id: selectedSubrelationalId ?? undefined,
         sortBy: sort.key ?? undefined,
         order: sort.order ?? undefined,
         search: searchQuery || undefined,
@@ -108,7 +117,7 @@ export default function InstagramUserList() {
     };
 
     fetchUsers();
-  }, [isPrivate, isMutual, selectedRelationalId, sort.key, sort.order, searchQuery]);
+  }, [genderSelect, isPrivate, isMutual, selectedRelationalId, selectedSubrelationalId, sort.key, sort.order, searchQuery]);
 
   // Close download dropdown when clicking outside
   useEffect(() => {
@@ -127,7 +136,30 @@ export default function InstagramUserList() {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getSubrelationalList();
+        const grouped = response.data.reduce<Record<number, SubRelationalDetail[]>>(
+          (acc, sub) => {
+            (acc[sub.relationsId] ??= []).push(sub);
+            return acc;
+          },
+          {}
+        );
+        setSubrelationalList(grouped);
+      } catch (error) {
+        console.error("Failed to fetch subrelationals:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
   // Handle filter changes
+  const handleGenderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setGenderSelect(value === 'all' ? undefined : (value as Exclude<GenderFilter, undefined>));
+  };
   const handlePrivateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setIsPrivate(value === "all" ? undefined : value === "true");
@@ -162,6 +194,26 @@ export default function InstagramUserList() {
     "px-4 py-2 text-sm text-gray-700 text-center whitespace-nowrap";
 
   // Badge components
+  const genderBadge = (gender: string | null) => {
+    if (!gender) {
+      return <span className="text-gray-400">-</span>;
+    }
+    const styles = {
+      male: "bg-blue-100 text-blue-700",
+      female: "bg-purple-100 text-purple-700",
+      unknown: "bg-gray-100 text-gray-700",
+    } as const;
+
+    return (
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+          styles[gender.toLowerCase() as keyof typeof styles] ?? "bg-gray-100 text-gray-700"
+        }`}
+      >
+        {gender}
+      </span>
+    );
+  };
   const privateBadge = (value: boolean | null) =>
     value == null ? <span className="text-gray-400">-</span> : (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${value ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
@@ -223,6 +275,7 @@ export default function InstagramUserList() {
         pk_def_insta: user.pk_def_insta ?? "",
         username: user.username ?? "",
         fullname: user.fullname ?? "",
+        gender: user.gender ?? null,
         is_private: user.is_private ?? false,
         media_post_total: user.media_post_total ?? 0,
         followers: user.followers ?? 0,
@@ -231,6 +284,10 @@ export default function InstagramUserList() {
         is_mutual: user.is_mutual ?? false,
         last_update: user.last_update ?? "",
         relations: u.relational_detail.map(r => r.relational),
+        subrelations: u.relational_detail.map(r => ({
+          relational: r.relational,
+          subrelational: r.subrelational_list.map(s => s.subrelational_name),
+        })),
       };
     });
   };
@@ -311,9 +368,10 @@ export default function InstagramUserList() {
           <h1 className="text-3xl font-bold text-gray-800">Instagram Users Data</h1>
           <p className="text-sm text-gray-800">List of collected Instagram account information</p>
         </div>
+
         {/* Searching Username */}
-        <div className="flex flex-row gap-4">
-          <div className="flex flex-col gap-1.5 w-44">
+        <div className="flex flex-row gap-2">
+          <div className="flex flex-col gap-1.5 w-40">
             <span className="text-sm font-medium text-gray-700">Search Insta Username</span>
             <input
               type="text"
@@ -323,9 +381,26 @@ export default function InstagramUserList() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+
+          {/* Set Gender Options */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-gray-700">Gender</span>
+            <select
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 shadow-sm hover:shadow-md bg-white"
+              value={genderSelect ?? "all"}
+              onChange={handleGenderChange}
+            >
+              <option value="all">All</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="unknown">Unknown</option>
+              <option value="not_specified">Null</option>
+            </select>
+          </div>
+
           {/* Set Privacy Status */}
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-gray-700">Privacy Status</span>
+            <span className="text-sm font-medium text-gray-700">Privacy</span>
             <select
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 shadow-sm hover:shadow-md bg-white"
               value={isPrivate === undefined ? "all" : String(isPrivate)}
@@ -336,6 +411,7 @@ export default function InstagramUserList() {
               <option value="false">Public</option>
             </select>
           </div>
+
           {/* Set Mutual Status */}
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Is Mutual</span>
@@ -349,6 +425,7 @@ export default function InstagramUserList() {
               <option value="false">No</option>
             </select>
           </div>
+
           {/* Choose User Relational Type */}
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Relational</span>
@@ -356,22 +433,55 @@ export default function InstagramUserList() {
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
                         focus:outline-none focus:ring-2 focus:ring-blue-500
                         transition-all duration-150 shadow-sm bg-white"
-                value={selectedRelationalId ?? "all"}
-                onChange={(e) =>
-                  setSelectedRelationalId(
-                    e.target.value === "all" ? null : Number(e.target.value)
-                  )
-                }
-              >
+              value={selectedRelationalId ?? "all"}
+              onChange={(e) => {
+                const value = e.target.value === "all" ? null : Number(e.target.value);
+                setSelectedRelationalId(value);
+                setSelectedSubrelationalId(null); // reset subrelation when relation changes
+              }}
+            >
               <option value="all">All</option>
+
               {relationalList.map((rel) => (
                 <option key={rel.id} value={rel.id}>
                   {rel.relational}
                 </option>
               ))}
-              <option value="0">No Relation</option>
+
+              <option value={0}>No Relation</option>
             </select>
           </div>
+
+          {/* Choosed Subrelations after Relational Selection */}
+          {selectedRelationalId !== null && selectedRelationalId !== 0 && (subrelationalList[selectedRelationalId]?.length ?? 0) > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-gray-700">
+                Subrelational
+              </span>
+
+              <select
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                          focus:outline-none focus:ring-2 focus:ring-blue-500
+                          transition-all duration-150 shadow-sm bg-white"
+                value={selectedSubrelationalId ?? "all"}
+                onChange={(e) =>
+                  setSelectedSubrelationalId(
+                    e.target.value === "all" ? null : Number(e.target.value)
+                  )
+                }
+              >
+                <option value="all">All</option>
+                <option value={0}>No Subrelation</option>
+
+                {(subrelationalList[selectedRelationalId] ?? []).map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.subrelational}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Download Data */}
           <div ref={downloadRef} className="relative flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Download Data</span>
@@ -439,6 +549,7 @@ export default function InstagramUserList() {
                 <SortableTh label="Insta ID" column="pk_def_insta" sort={sort} onSort={handleSortClickAsc} thClass={thClass} />
                 <SortableTh label="Username" column="username" sort={sort} onSort={handleSortClickAsc} thClass={thClass} />
                 <SortableTh label="Full Name" column="fullname" sort={sort} onSort={handleSortClickAsc} thClass={thClass} />
+                <th className={thClass}>Gender</th>
                 <th className={thClass}>Private</th>
                 <SortableTh label="Followers" column="followers" sort={sort} onSort={handleSortClickDesc} thClass={thClass} />
                 <SortableTh label="Following" column="following" sort={sort} onSort={handleSortClickDesc} thClass={thClass} />
@@ -446,7 +557,8 @@ export default function InstagramUserList() {
                 <SortableTh label="Posts" column="media_post_total" sort={sort} onSort={handleSortClickDesc} thClass={thClass} />
                 <th className={thClass}>Biography</th>
                 <th className={thClass}>Mutual</th>
-                <th className={thClass}>Relations</th>
+                {/* <th className={thClass}>Relations</th> */}
+                {/* <th className={thClass}>Subrelations</th> */}
               </tr>
             </thead>
 
@@ -517,7 +629,7 @@ export default function InstagramUserList() {
                       <td className="px-4 py-2 text-sm text-gray-700 text-center whitespace-nowrap max-w-56 truncate">
                         {user.fullname?.trim() ? user.fullname : "-"}
                       </td>
-
+                      <td className={tdClass}>{genderBadge(user.gender)}</td>
                       <td className={tdClass}>{privateBadge(user.is_private)}</td>
                       <td className={tdClass}>{user.followers ?? "-"}</td>
                       <td className={tdClass}>{user.following ?? "-"}</td>
@@ -535,8 +647,9 @@ export default function InstagramUserList() {
                       </td>
 
                       <td className={tdClass}>{mutualBadge(user.is_mutual)}</td>
-
-                      <td className={tdClass}>
+                      
+                      {/* Relational List */}
+                      {/* <td className={tdClass}>
                         <div className="flex flex-wrap justify-center gap-1.5 mx-auto">
                           {(() => {
                             const filteredRelations =
@@ -554,6 +667,7 @@ export default function InstagramUserList() {
                                   style={{
                                     backgroundColor: r.bg_color,
                                     color: r.text_color,
+                                    border: `2px solid ${r.text_color}`,
                                   }}
                                 >
                                   {r.relational}
@@ -564,7 +678,57 @@ export default function InstagramUserList() {
                             );
                           })()}
                         </div>
-                      </td>
+                      </td> */}
+                      
+                      {/* Subrelational List */}
+                      {/* <td className={tdClass}>
+                        <div className="flex flex-wrap justify-center items-center gap-1.5 mx-auto">
+                          {(() => {
+                            // Filter relation
+                            let relations =
+                              selectedRelationalId === null
+                                ? userData.relational_detail
+                                : userData.relational_detail.filter(
+                                    (relation) => relation.id === selectedRelationalId
+                                  );
+
+                            // Filter subrelation
+                            if (selectedSubrelationalId !== null) {
+                              relations = relations
+                                .map((relation) => ({
+                                  ...relation,
+                                  subrelational_list:
+                                    selectedSubrelationalId === 0
+                                      ? []
+                                      : relation.subrelational_list.filter(
+                                          (sub) =>
+                                            sub.subrelational_id === selectedSubrelationalId
+                                        ),
+                                }))
+                                .filter((relation) => relation.subrelational_list.length > 0);
+                            }
+
+                            if (relations.length === 0 || relations.every((relation) => relation.subrelational_list.length === 0)) {
+                              return "-";
+                            }
+
+                            return relations.flatMap((relation) =>
+                              relation.subrelational_list.map((sub) => (
+                                <span
+                                  key={sub.subrelational_id}
+                                  className="px-2 py-0.5 rounded-full text-xs font-medium"
+                                  style={{
+                                    backgroundColor: relation.bg_color,
+                                    color: relation.text_color,
+                                  }}
+                                >
+                                  {sub.subrelational_name}
+                                </span>
+                              ))
+                            );
+                          })()}
+                        </div>
+                      </td> */}
                     </tr>
                   );
                 })
@@ -573,9 +737,17 @@ export default function InstagramUserList() {
           </table>
         </div>
       </div>
-      <div className="flex flex-row gap-3 ml-auto justify-end -mt-2">
+      <div className="flex flex-row gap-2 ml-auto justify-end -mt-2">
         <div className="text-sm text-gray-600 px-3 py-1 bg-white rounded-md shadow-sm">
           Total Data: <b>{stats?.total_data ?? 0}</b>
+        </div>
+
+        <div className="text-sm text-gray-600 px-3 py-1 bg-white rounded-md shadow-sm">
+          Median Followers: <b>{stats?.median_followers ?? "-"}</b>
+        </div>
+        
+        <div className="text-sm text-gray-600 px-3 py-1 bg-white rounded-md shadow-sm">
+          Median Following: <b>{stats?.median_following ?? "-"}</b>
         </div>
 
         <div className="text-sm text-gray-600 px-3 py-1 bg-white rounded-md shadow-sm">
@@ -637,12 +809,44 @@ export default function InstagramUserList() {
                                     style={{
                                       backgroundColor: r.bg_color,
                                       color: r.text_color,
+                                      border: `2px solid ${r.text_color}`,
                                     }}
                                   >
                                     {r.relational}
                                   </span>
                                 ))
                               : "-"}
+                          </div>
+
+                          <div className="mt-2 flex flex-wrap items-center gap-0.5">
+                            {selectedUser.relational_detail?.some(
+                              (r) => r.subrelational_list?.length > 0
+                            ) ? (
+                              selectedUser.relational_detail
+                                .filter((relation) => relation.subrelational_list?.length > 0)
+                                .map((relation, relationIndex, relations) => (
+                                  <React.Fragment key={relation.id}>
+                                    {relation.subrelational_list.map((sub) => (
+                                      <span
+                                        key={sub.subrelational_id}
+                                        className="px-2 py-0.5 rounded-full text-xs font-medium"
+                                        style={{
+                                          backgroundColor: relation.bg_color,
+                                          color: relation.text_color,
+                                        }}
+                                      >
+                                        {sub.subrelational_name}
+                                      </span>
+                                    ))}
+
+                                    {relationIndex < relations.length - 1 && (
+                                      <span className="mx-1 text-gray-400 font-medium">|</span>
+                                    )}
+                                  </React.Fragment>
+                                ))
+                            ) : (
+                              "-"
+                            )}
                           </div>
                       </div>
                       <div className="ml-auto flex flex-row items-end gap-2">
