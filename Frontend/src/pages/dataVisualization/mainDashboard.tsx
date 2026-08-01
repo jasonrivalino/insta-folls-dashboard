@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { getInstagramUsers, type InstagramUserQuery } from "../../services/dataVisualization/instaUserList.services"
 import type { InstaRelationalData, GeneralStatistics, RelationalDetail } from "../../models/table.models"
-import { getRelationalDetails } from "../../services/settings/changeInstaInfo.services"
+import { getRelationalList } from "../../services/settings/relationalList.services";
 
 import BarChart from "../../components/graph/barChart"
 import ScatterChart from "../../components/graph/scatterPlot"
@@ -31,7 +31,7 @@ export default function MainDashboard() {
   useEffect(() => {
       const loadRelationalData = async () => {
         try {
-          const res = await getRelationalDetails();
+          const res = await getRelationalList();
           setRelationalList(res.data);
         } catch (error) {
           console.error("Failed to load relational data:", error);

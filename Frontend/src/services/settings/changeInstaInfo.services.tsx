@@ -1,16 +1,8 @@
 import axios from "axios";
-import type { InstagramUser, RelationalDetailResponse } from "../../models/table.models";
+import type { InstagramUser } from "../../models/table.models";
 import { getInstagramUsers } from "../dataVisualization/instaUserList.services";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-
-// Service to get all relational details
-export const getRelationalDetails = async (): Promise<RelationalDetailResponse> => {
-  const response = await axios.get(
-    `${BACKEND_URL}/api/relational-status-data`
-  );
-  return response.data;
-}
 
 // Service to add new Instagram user and relational details
 export type InstagramUserCreatePayload = Omit<

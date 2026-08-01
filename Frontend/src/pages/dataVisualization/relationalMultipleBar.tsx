@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import type { RelationalDetail } from "../../models/table.models"
-import { getRelationalDetails } from "../../services/settings/changeInstaInfo.services"
+import { getRelationalList } from "../../services/settings/relationalList.services";
 import MultipleGraphBlock from "../../components/graph/multipleBar/multipleGraphBlock"
 
 export default function RelationalComparisonPage() {
@@ -9,7 +9,7 @@ export default function RelationalComparisonPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getRelationalDetails()
+      const res = await getRelationalList()
       setRelationalList(res.data)
     }
     fetchData()

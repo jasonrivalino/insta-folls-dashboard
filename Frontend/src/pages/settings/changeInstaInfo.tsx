@@ -2,7 +2,8 @@ import type { InstaRelationalData, RelationalDetail, SubRelationalDetail } from 
 
 import { getInstagramUsers } from "../../services/dataVisualization/instaUserList.services";
 import { getSubrelationalList } from "../../services/settings/subrelationalList.services";
-import { getRelationalDetails, addInstagramUser, updateInstagramUser, deleteInstagramUser } from "../../services/settings/changeInstaInfo.services";
+import { addInstagramUser, updateInstagramUser, deleteInstagramUser } from "../../services/settings/changeInstaInfo.services";
+import { getRelationalList } from "../../services/settings/relationalList.services";
 
 import DeleteConfirmationPopup from "../../components/deleteConfirmationPopup";
 import ActionResultPopup from "../../components/actionResultPopup";
@@ -125,10 +126,9 @@ export default function ChangeInstaInfo() {
   const loadRelationSubrelationalData = async () => {
     try {
       const [relationalRes, subrelationalRes] = await Promise.all([
-        getRelationalDetails(),
+        getRelationalList(),
         getSubrelationalList(),
       ]);
-
       setRelationalList(relationalRes.data);
 
       // Group subrelations by relational_id
@@ -811,7 +811,7 @@ export default function ChangeInstaInfo() {
                   {selectedRelationIds.length > 0 && (
                     <div className="flex flex-col gap-1">
                       <h4 className="text-base font-medium text-gray-700">
-                        Subrelational Preview
+                        Subrelational List:
                       </h4>
 
                       <div className="bg-white px-2.5 py-3 rounded-lg shadow-sm border border-gray-700/50 flex flex-col gap-3 max-h-[40vh] overflow-y-auto">

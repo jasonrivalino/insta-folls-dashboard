@@ -8,7 +8,7 @@ import { ArrowUpDown, ListFilter } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretUp, faCaretDown } from '@fortawesome/free-solid-svg-icons'
 import { FiGrid, FiLock, FiUnlock, FiUserPlus, FiUsers } from "react-icons/fi";
-import { getRelationalDetails } from "../../services/settings/changeInstaInfo.services";
+import { getRelationalList } from "../../services/settings/relationalList.services";
 import { useMainAccount } from "../../context/useMainAccount";
 import StatCard from "../../components/statCard";
 
@@ -79,7 +79,7 @@ export default function InstagramUserList() {
   useEffect(() => {
     const loadRelationalData = async () => {
       try {
-        const res = await getRelationalDetails();
+        const res = await getRelationalList();
         setRelationalList(res.data);
       } catch (error) {
         console.error("Failed to load relational data:", error);
