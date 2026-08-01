@@ -439,6 +439,8 @@ export default function ChangeInstaInfo() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+
+          {/* Relational */}
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-gray-700">Relational</span>
             <select
@@ -721,7 +723,7 @@ export default function ChangeInstaInfo() {
                     {/* Boolean Checkbox */}
                     <div className="flex flex-col gap-1 w-full">
                       <h4 className="text-base font-medium text-gray-700">Gender</h4>
-                      <div className="flex flex-col gap-1 justify-end bg-white px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50">
+                      <div className="grid grid-cols-2 gap-1 bg-white px-2.5 py-2 rounded-lg shadow-sm border border-gray-700/50">
                         <label className="flex items-center gap-2 text-sm">
                           <input
                             type="radio"
@@ -733,6 +735,19 @@ export default function ChangeInstaInfo() {
                             }
                           />
                           Male
+                        </label>
+
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="Unknown"
+                            checked={formData.gender === "Unknown"}
+                            onChange={(e) =>
+                              setFormData({ ...formData, gender: e.target.value })
+                            }
+                          />
+                          Unknown
                         </label>
 
                         <label className="flex items-center gap-2 text-sm">
