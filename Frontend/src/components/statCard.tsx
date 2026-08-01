@@ -14,9 +14,30 @@ export default function StatCard({
   const isGap = label === "Gap"
   const hasRank = rank !== undefined && totalUsers !== undefined
 
+  const getRankingText = () => {
+    if (!hasRank) return null
+
+    // Special cases
+    if (rank === 1) return "Top 1"
+    if (rank === 2) return "Top 2"
+    if (rank === 3) return "Top 3"
+    if (rank === totalUsers) return "Bottom Last"
+
+    const percentile = Math.round((rank / totalUsers) * 100)
+    if (percentile <= 50) {
+      return `Top ${percentile}%`
+    }
+    return `Bottom ${percentile - 50}%`
+  }
+
+  const rankingText = getRankingText()
+  const rankingClass = rankingText?.startsWith("Top")
+    ? "text-sm text-green-600 font-semibold"
+    : "text-sm text-red-600 font-semibold"
+
   const containerClass = `
     rounded-xl
-    ${hasRank ? "p-4" : "px-4 py-[1.625rem]"}
+    ${hasRank ? "px-4 py-3" : "px-4 py-[2.125rem]"}
     flex items-center gap-4
     border shadow-sm transition
     ${
@@ -40,7 +61,7 @@ export default function StatCard({
   `
 
   const valueClass = `
-    text-xl font-bold
+    text-xl font-bold mt-0.5
     ${
       isGap && value > 0
         ? "text-green-700"
@@ -53,15 +74,19 @@ export default function StatCard({
   return (
     <div className={containerClass}>
       {icon && <div className={iconClass}>{icon}</div>}
+
       <div className="flex flex-col">
         <p className="text-sm text-gray-500">{label}</p>
         <p className={valueClass}>{value}</p>
-
         {hasRank && (
-          <p className="text-xs text-gray-600 mt-1">
-            Rank <span className="font-semibold">{rank}</span> of{" "}
-            <span className="font-semibold">{totalUsers}</span> Instagram Users
-          </p>
+          <div>
+            <p className={rankingClass}>{rankingText}</p>
+            <p className="text-xs text-gray-600 mt-2">
+              Rank{" "}
+              <span className="font-semibold">{rank}</span> of{" "}
+              <span className="font-semibold">{totalUsers}</span> Instagram Users
+            </p>
+          </div>
         )}
       </div>
     </div>
