@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 
 import { useMainAccount } from "../../context/useMainAccount"
 import { getAvailableMainInstaAccounts, getPersonalProfileData, updateMainAccountCenter } from "../../services/settings/profileEdit.services"
-import type { GeneralStatistics, InstaRelationalData } from "../../models/table.models"
+import type { GeneralStatistics, InstaRelationalData, RelationalDetail } from "../../models/table.models"
 import ActionResultPopup from "../../components/actionResultPopup";
 import StatCard from "../../components/statCard";
 
@@ -24,12 +24,14 @@ export default function ProfileEdit() {
   const [openChangeMain, setOpenChangeMain] = useState(false)
   const [selectedMain, setSelectedMain] = useState<number | null>(null)
   const isChanged = selectedMain !== account?.id
+  const [openChangeRelational, setOpenChangeRelational] = useState(false)
 
   // Action Result Popup State
   const [resultPopupOpen, setResultPopupOpen] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<boolean | null>(null);
   const [resultMessage, setResultMessage] = useState<React.ReactNode>(null)
   const [generalStats, setGeneralStats] = useState<GeneralStatistics | null>(null)
+  const [previewRelations, setPreviewRelations] = useState<RelationalDetail[]>([]);
 
   useEffect(() => {
     if (!account?.id) return
@@ -42,6 +44,7 @@ export default function ProfileEdit() {
         if (result) {
           setProfile(result.data[0])
           setGeneralStats(result.general_statistics)
+          setPreviewRelations(result.data[0]?.relational_detail ?? [])
         }
       } catch (err) {
         console.error(err)
@@ -186,79 +189,145 @@ export default function ProfileEdit() {
             </div>
         </div>
 
-        <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-800 mb-2">Account Settings</h2>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                {/* CHANGE MAIN ACCOUNT CENTER */}
-                <button
-                    onClick={() => {
-                        const next = !openChangeMain
-                        setOpenChangeMain(next)
+        <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2.5">
+            <h2 className="text-lg font-bold text-gray-800">Account Settings</h2>
+            
+            {/* Menu List Wrapper */}
+            <div className="flex flex-col gap-3">
 
-                        // Fetch available main accounts when opening
-                        if (next) {
-                            fetchAvailableMainAccounts()
-                        } else {
-                            resetSelectedMain()
-                        }
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
-                >
-                    <h3 className="text-base font-semibold text-gray-800">Change Main Account Center</h3>
-                    <FontAwesomeIcon icon={openChangeMain ? faCaretUp : faCaretDown} className="text-gray-600"/>
-                </button>
+                {/* Change Main Account Center */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <button
+                        onClick={() => {
+                            const next = !openChangeMain
+                            setOpenChangeMain(next)
 
-                {/* CONTENT */}
-                {openChangeMain && (
-                    <div className="px-4 py-3 border-t border-gray-200 flex flex-row gap-4 items-center justify-between">
-                        <div className="flex flex-row gap-4 items-center">
-                            <span className="text-base text-blue-800 font-medium">
-                                Select Main Account Center:
-                            </span>
-
-                            <select
-                                value={selectedMain ?? ""}
-                                onChange={(e) => setSelectedMain(Number(e.target.value))}
-                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                                >
-                                {loadingMains && (
-                                    <option disabled>Loading accounts...</option>
-                                )}
-
-                                {!loadingMains &&
-                                    availableMains.map((item) => {
-                                    const insta = item.instagram_detail
-                                    const isCurrent = insta.id === account?.id
-
-                                    return (
-                                        <option
-                                        key={insta.id}
-                                        value={insta.id}
-                                        >
-                                        @{insta.username}
-                                        {isCurrent ? " (Current)" : ""}
-                                        </option>
-                                    )
-                                })}
-                            </select>
-                        </div>
-
-                        {/* CONFIRM BUTTON */}
-                        <button
-                            onClick={handleConfirmChangeMainUser}
-                            disabled={!isChanged}
-                            className={`px-6 py-2 rounded-lg text-sm font-semibold transition
-                            ${
-                                isChanged
-                                ? "bg-blue-600 text-white hover:bg-blue-700"
-                                : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                            // Fetch available main accounts when opening
+                            if (next) {
+                                fetchAvailableMainAccounts()
+                            } else {
+                                resetSelectedMain()
                             }
-                            `}
-                        >
-                            Confirm
-                        </button>
-                    </div>
-                )}
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition cursor-pointer"
+                    >
+                        <h3 className="text-base font-semibold text-gray-800">Change Main Account Center</h3>
+                        <FontAwesomeIcon icon={openChangeMain ? faCaretUp : faCaretDown} className="text-gray-600"/>
+                    </button>
+
+                    {/* CONTENT */}
+                    {openChangeMain && (
+                        <div className="px-4 py-3 border-t border-gray-200 flex flex-row gap-4 items-center justify-between">
+                            <div className="flex flex-row gap-4 items-center">
+                                <span className="text-base text-blue-800 font-medium">
+                                    Select Main Account Center:
+                                </span>
+
+                                <select
+                                    value={selectedMain ?? ""}
+                                    onChange={(e) => setSelectedMain(Number(e.target.value))}
+                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                                    >
+                                    {loadingMains && (
+                                        <option disabled>Loading accounts...</option>
+                                    )}
+
+                                    {!loadingMains &&
+                                        availableMains.map((item) => {
+                                        const insta = item.instagram_detail
+                                        const isCurrent = insta.id === account?.id
+
+                                        return (
+                                            <option
+                                            key={insta.id}
+                                            value={insta.id}
+                                            >
+                                            @{insta.username}
+                                            {isCurrent ? " (Current)" : ""}
+                                            </option>
+                                        )
+                                    })}
+                                </select>
+                            </div>
+
+                            {/* CONFIRM BUTTON */}
+                            <button
+                                onClick={handleConfirmChangeMainUser}
+                                disabled={!isChanged}
+                                className={`px-6 py-2 rounded-lg text-sm font-semibold transition
+                                ${
+                                    isChanged
+                                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                                    : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                }
+                                `}
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Show relational and subrelational lists */}
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <button
+                        onClick={() => {
+                            const next = !openChangeRelational
+                            setOpenChangeRelational(next)
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition cursor-pointer"
+                    >
+                        <h3 className="text-base font-semibold text-gray-800">Current User Relational</h3>
+                        <FontAwesomeIcon icon={openChangeRelational ? faCaretUp : faCaretDown} className="text-gray-600"/>
+                    </button>
+
+                    {openChangeRelational && (
+                        previewRelations.length === 0 ? (
+                            <p className="text-sm text-gray-500">
+                                No relational access found.
+                            </p>
+                        ) : (
+                            <div className="flex flex-col gap-3 p-3 bg-white border border-gray-200">
+                                {previewRelations.map((relation) => (
+                                    <div key={relation.id} className="border rounded-lg p-2.5 bg-gray-100 flex flex-col gap-2">
+                                        {/* Relation */}
+                                        <div className="self-start px-3 py-1 rounded-lg text-sm font-semibold"
+                                            style={{
+                                                backgroundColor: relation.bg_color,
+                                                color: relation.text_color,
+                                                border: `2px solid ${relation.border_color}`,
+                                            }}
+                                        >
+                                            {relation.relational}
+                                        </div>
+
+                                        {/* Subrelations */}
+                                        <div className="flex flex-wrap gap-2">
+                                            {relation.subrelational_list?.length ? (
+                                                relation.subrelational_list.map((sub) => (
+                                                    <span
+                                                        key={sub.subrelational_id}
+                                                        className="px-2 py-1 rounded-lg text-xs font-medium"
+                                                        style={{
+                                                            backgroundColor: relation.bg_color,
+                                                            color: relation.text_color,
+                                                        }}
+                                                    >
+                                                        {sub.subrelational_name}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-xs text-gray-500 italic mt-0.5">
+                                                    No subrelations
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+                </div>
             </div>
         </div>
       </div>
