@@ -461,8 +461,9 @@ export default function ChangeInstaInfo() {
               ))}
             </select>
           </div>
+          
           {/* Subrelational */}
-          {selectedRelationalIdFilter !== null && selectedRelationalIdFilter !== 0 && (
+          {selectedRelationalIdFilter !== null && selectedRelationalIdFilter !== 0 && subrelationalList[selectedRelationalIdFilter]?.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-gray-700">
                 Subrelational
