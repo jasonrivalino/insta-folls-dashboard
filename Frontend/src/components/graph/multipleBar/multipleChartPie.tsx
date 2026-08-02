@@ -1,14 +1,16 @@
 import { useMemo } from "react"
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, type ChartOptions, type ChartData } from "chart.js"
 import { Pie } from "react-chartjs-2"
-import type { RelationalDetail, InstaRelationalData } from "../../../models/table.models"
+import type { RelationalDetail, InstaRelationalData, SubRelationalDetail } from "../../../models/table.models"
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 type Props = {
-  relational: RelationalDetail
-  data: InstaRelationalData[]
-}
+  relational?: RelationalDetail | null;
+  subrelational?: SubRelationalDetail | null;
+  data: InstaRelationalData[],
+  showSubrelationalText?: boolean;
+};
 
 type PieSlice = {
   label: string
@@ -18,10 +20,7 @@ type PieSlice = {
 const RED = "#EF4444"
 const BLUE = "#3B82F6"
 
-export default function MultiplePieChart({
-  relational,
-  data,
-}: Props) {
+export default function MultiplePieChart({relational, subrelational, data, showSubrelationalText}: Props) {
   const privateDistribution = useMemo(() => {
     const mapPieData = (
       field: "is_private" | "is_mutual"
@@ -129,12 +128,16 @@ export default function MultiplePieChart({
     },
   }
 
+  const relationalLabel = relational?.relational ?? "No Relational";
+  const subrelationalLabel = subrelational?.subrelational ?? "No Subrelational";
+  const labelText = showSubrelationalText ? `${relationalLabel} - ${subrelationalLabel}` : `${relationalLabel} - All`;
+
   return (
     <div className="grid grid-rows-2 gap-6 w-full">
       {/* Private */}
       <div className="flex flex-col items-center">
-        <h3 className="text-base font-medium text-center mb-3">
-          {relational.relational} (Private vs Public)
+        <h3 className="text-sm font-medium text-center mb-3">
+          {labelText} (Private vs Public)
         </h3>
         <div className="w-68 h-68">
             <Pie
@@ -146,8 +149,8 @@ export default function MultiplePieChart({
 
       {/* Mutual */}
       <div className="flex flex-col items-center">
-        <h3 className="text-base font-medium text-center mb-3">
-          {relational.relational} (Mutual vs Non-Mutual)
+        <h3 className="text-sm font-medium text-center mb-3">
+          {labelText} (Mutual vs Non-Mutual)
         </h3>
         <div className="w-68 h-68">
             <Pie

@@ -53,8 +53,6 @@ export default function MainDashboard() {
                 return;
             }
             const response = await getSubrelationalList(selectedRelationalId, true);
-            console.log("Fetched subrelationals:", response.data);
-
             setSubrelationalList(response.data);
             setSelectedSubrelationalId(null);
         } catch (error) {
