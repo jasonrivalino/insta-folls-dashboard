@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { getInstagramUsers, type InstagramUserQuery } from "../../services/dataVisualization/instaUserList.services"
-import type { InstaRelationalData, GeneralStatistics, RelationalDetail } from "../../models/table.models"
+import type { InstaRelationalData, GeneralStatistics, RelationalDetail, SubRelationalDetail } from "../../models/table.models"
 import { getRelationalList } from "../../services/settings/relationalList.services";
+import { getSubrelationalList } from "../../services/settings/subrelationalList.services";
 
 import BarChart from "../../components/graph/barChart"
 import ScatterChart from "../../components/graph/scatterPlot"
@@ -20,6 +21,8 @@ export default function MainDashboard() {
   const [isMutual, setIsMutual] = useState<boolean | undefined>(undefined);
   const [relationalList, setRelationalList] = useState<RelationalDetail[]>([]);
   const [selectedRelationalId, setSelectedRelationalId] = useState<number | null>(null);
+  const [subrelationalList, setSubrelationalList] = useState<SubRelationalDetail[]>([]);
+  const [selectedSubrelationalId, setSelectedSubrelationalId] = useState<number | null>(null);
 
   // Dashboard states
   const [chartDataSource, setChartDataSource] = useState<InstaRelationalData[]>([])
@@ -27,19 +30,40 @@ export default function MainDashboard() {
   const [maxRangeFolls, setMaxRangeFolls] = useState<number>(2000)
   const [maxRangeGaps, setMaxRangeGaps] = useState<number>(250)
 
-  // Handle data fetching
+  // Handle data fetching for relational list
   useEffect(() => {
-      const loadRelationalData = async () => {
+    const loadRelationalData = async () => {
         try {
-          const res = await getRelationalList();
-          setRelationalList(res.data);
+        const res = await getRelationalList(true);
+        setRelationalList(res.data);
         } catch (error) {
-          console.error("Failed to load relational data:", error);
+        console.error("Failed to load relational data:", error);
         }
-      };
-  
-      loadRelationalData();
+    };
+    loadRelationalData();
   }, []);
+
+  // Handle data fetching for subrelational list based on selected relational
+  useEffect(() => {
+    const fetchSubrelationals = async () => {
+        try {
+            if (selectedRelationalId == null || selectedRelationalId === 0) {
+                setSubrelationalList([]);
+                setSelectedSubrelationalId(null);
+                return;
+            }
+            const response = await getSubrelationalList(selectedRelationalId, true);
+            console.log("Fetched subrelationals:", response.data);
+
+            setSubrelationalList(response.data);
+            setSelectedSubrelationalId(null);
+        } catch (error) {
+            console.error("Failed to fetch subrelationals:", error);
+            setSubrelationalList([]);
+            setSelectedSubrelationalId(null);
+        }
+    };
+  fetchSubrelationals()}, [selectedRelationalId]);
   
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -51,6 +75,10 @@ export default function MainDashboard() {
 
         if (selectedRelationalId !== null) {
             filterParams.relational_id = selectedRelationalId
+        }
+
+        if (selectedSubrelationalId !== null) {
+            filterParams.subrelational_id = selectedSubrelationalId
         }
 
         // MAIN STATS
@@ -101,7 +129,7 @@ export default function MainDashboard() {
         }
     }
     fetchDashboardData()
-  }, [isMutual, selectedRelationalId])
+  }, [isMutual, selectedRelationalId, selectedSubrelationalId])
 
   const handleMutualChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
@@ -117,9 +145,9 @@ export default function MainDashboard() {
 
 return (
     <div className="space-y-6">
-        <div className="flex flex-col w-full gap-5 pt-5 pb-10 bg-white rounded-xl shadow-sm">
+        <div className="flex flex-col w-full gap-5 pt-5 pb-7 bg-white rounded-xl shadow-sm">
             <h2 className="text-2xl font-bold text-center">Main Instagram Preview Information</h2>
-            <div className="flex flex-row gap-6 justify-center px-5">
+            <div className="flex flex-row gap-4 justify-center px-3">
                 <div className="rounded-xl border bg-gray-100 shadow-sm flex flex-row divide-x divide-black">
                     {/* COL 1 — TOTAL DATA */}
                     <div className="flex flex-col justify-center items-center px-6 py-4 gap-1">
@@ -252,6 +280,8 @@ return (
                             <option value="false">No</option>
                         </select>
                     </div>
+
+                    {/* Relational */}
                     <div className="flex flex-row gap-4 items-center">
                         <span className="text-sm font-medium text-gray-700 w-3/5">Relational:</span>
                         <select
@@ -259,20 +289,48 @@ return (
                                     focus:outline-none focus:ring-2 focus:ring-blue-500
                                     transition-all duration-150 shadow-sm bg-white"
                             value={selectedRelationalId ?? "all"}
-                            onChange={(e) =>
-                            setSelectedRelationalId(
-                                e.target.value === "all" ? null : Number(e.target.value)
-                            )
-                            }
+                            onChange={(e) => {
+                                const value = e.target.value === "all" ? null : Number(e.target.value);
+                                setSelectedRelationalId(value);
+                                setSelectedSubrelationalId(null);
+                            }}
                         >
-                        <option value="all">All</option>
-                        {relationalList.map((rel) => (
-                            <option key={rel.id} value={rel.id}>
-                            {rel.relational}
-                            </option>
-                        ))}
+                            <option value="all">All</option>
+                            <option value={0}>No Relation</option>
+                            {relationalList.map((rel) => (
+                                <option key={rel.id} value={rel.id}>
+                                {rel.relational}
+                                </option>
+                            ))}
                         </select>
                     </div>
+
+                    {/* Subrelational */}
+                    {selectedRelationalId !== null && selectedRelationalId !== 0 && subrelationalList.length > 0 && (
+                        <div className="flex flex-row gap-4 items-center">
+                            <span className="text-sm font-medium text-gray-700 w-3/5">Subrelation:</span>
+
+                            <select
+                            className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                                focus:outline-none focus:ring-2 focus:ring-blue-500
+                                transition-all duration-150 shadow-sm bg-white"
+                            value={selectedSubrelationalId ?? "all"}
+                            onChange={(e) =>
+                                setSelectedSubrelationalId(
+                                e.target.value === "all" ? null : Number(e.target.value)
+                                )
+                            }
+                            >
+                            <option value="all">All</option>
+                            <option value={0}>No Subrelation</option>
+                            {subrelationalList.map((sub) => (
+                                <option key={sub.id} value={sub.id}>
+                                {sub.subrelational}
+                                </option>
+                            ))}
+                            </select>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
