@@ -105,7 +105,7 @@ export default function RelationalList() {
 
   // Refresh subrelational list
   const refreshSub = async (relationsId: number) => {
-      const res = await getSubrelationalList(`?relationsId=${relationsId}`);
+      const res = await getSubrelationalList(relationsId);
       setSubrelations(res.data);
     };
     

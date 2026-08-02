@@ -189,7 +189,7 @@ export default function ChangeInstaInfo() {
     setSelectedRelationIds(updatedRelations);
 
     try {
-      const res = await getSubrelationalList(`?relationsId=${relationId}`);
+      const res = await getSubrelationalList(relationId);
       setSubrelationalList((prev) => ({
         ...prev,
         [relationId]: res.data,
@@ -205,9 +205,7 @@ export default function ChangeInstaInfo() {
     try {
       await Promise.all(
         relationIds.map(async (relationId) => {
-          const res = await getSubrelationalList(
-            `?relationsId=${relationId}`
-          );
+          const res = await getSubrelationalList(relationId);
           subrelationMap[relationId] = res.data;
         })
       );

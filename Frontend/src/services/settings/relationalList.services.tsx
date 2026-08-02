@@ -4,11 +4,15 @@ import type { RelationalDetail, RelationalDetailResponse } from "../../models/ta
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Fetch relational status list from backend
-export const getRelationalList = async (): Promise<RelationalDetailResponse> => {
+export const getRelationalList = async (haveRelational?: boolean):Promise<RelationalDetailResponse> => {
   const response = await axios.get<RelationalDetailResponse>(
-    `${BACKEND_URL}/api/relational-status-data`
+    `${BACKEND_URL}/api/relational-status-data`,
+    {
+      params: {
+        haveRelational,
+      },
+    }
   );
-
   return response.data;
 };
 

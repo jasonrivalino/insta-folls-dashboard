@@ -441,14 +441,12 @@ export default function InstagramUserList() {
               }}
             >
               <option value="all">All</option>
-
+              <option value={0}>No Relation</option>
               {relationalList.map((rel) => (
                 <option key={rel.id} value={rel.id}>
                   {rel.relational}
                 </option>
               ))}
-
-              <option value={0}>No Relation</option>
             </select>
           </div>
 

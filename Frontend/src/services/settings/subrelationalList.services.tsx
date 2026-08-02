@@ -4,11 +4,16 @@ import type { SubRelationalDetailResponse, SubRelationalDetail } from "../../mod
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Fetch subrelational detail list from backend
-export const getSubrelationalList = async (queryParams?: string): Promise<SubRelationalDetailResponse> => {
+export const getSubrelationalList = async (relationsId?: number, haveSubrelational?: boolean): Promise<SubRelationalDetailResponse> => {
   const response = await axios.get<SubRelationalDetailResponse>(
-    `${BACKEND_URL}/api/subrelational-status-data${queryParams || ""}`
+    `${BACKEND_URL}/api/subrelational-status-data`,
+    {
+      params: {
+        relationsId,
+        haveSubrelational,
+      },
+    }
   );
-
   return response.data;
 };
 
