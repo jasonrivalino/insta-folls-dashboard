@@ -250,7 +250,7 @@ export const updateInstagramData = async (req: Request, res: Response) => {
     if (followers !== undefined) updateData.followers = followers
     if (following !== undefined) updateData.following = following
     if (biography !== undefined) updateData.biography = biography
-    if (gender !== undefined) updateData.gender = gender
+    if (gender !== undefined) updateData.gender = typeof gender === "string" && gender.trim() !== "" ? gender : "Unknown";
     if (typeof is_mutual === 'boolean') updateData.is_mutual = is_mutual
 
     if (Object.keys(updateData).length === 0) {

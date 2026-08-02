@@ -9,22 +9,32 @@ import prisma from '../lib/prisma-mysql'
 // Fetch all relational data
 export const getAllRelationData = async (req: Request, res: Response) => {
   try {
+    const { haveRelational } = req.query
+
+    const where: any = {}
+    if (haveRelational === "true") {
+      where.instagram_users = {
+        some: {}
+      }
+    }
+
     const data = await prisma.relation_Status.findMany({
-        orderBy: {
-            id: 'asc'
-        }
+      where,
+      orderBy: {
+        id: "asc"
+      }
     })
 
     res.status(200).json({
       success: true,
       total: data.length,
-      data: data
+      data
     })
   } catch (error) {
-    console.error('GET RELATIONAL STATUS ERROR:', error)
+    console.error("GET RELATIONAL STATUS ERROR:", error)
     res.status(500).json({
       success: false,
-      message: 'Failed to get relational data',
+      message: "Failed to get relational data",
       error: error instanceof Error ? error.message : error
     })
   }

@@ -11,10 +11,23 @@ export const getAllSubrelationData = async (req: Request, res: Response) => {
       ? Number(req.query.relationsId)
       : undefined
 
+    // Have subrelational filter
+    const { haveSubrelational } = req.query
+    const where: any = {}
+
+    if (relationsId !== undefined) {
+      where.relationsId = relationsId
+    }
+    if (haveSubrelational === "true" && relationsId !== undefined) {
+      where.instagram_users = {
+        some: {}
+      }
+    }
+
     const data = await prisma.subrelation_Status.findMany({
-      ...(relationsId !== undefined ? { where: { relationsId } } : {}),
+      where,
       orderBy: {
-        id: 'asc'
+        id: "asc"
       }
     })
 
