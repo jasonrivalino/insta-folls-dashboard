@@ -26,9 +26,11 @@ model Main_Instagram_Data {
   is_mutual        Boolean
   last_update      DateTime?  @updatedAt
   gender           Gender?
+  snapshot_at      DateTime?
 
   relations        Relation_Status[]
   subrelations     Subrelation_Status[]
+  instagram_logs   Update_Instagram_Data_Log[]
 }
 
 enum Gender {
@@ -60,10 +62,26 @@ model Subrelation_Status {
   id                Int      @id @default(autoincrement())
   subrelational     String
 
-  relationsId       Int
-  relations         Relation_Status @relation(fields: [relationsId], references: [id], onDelete: Cascade)
-  
-  @@unique([subrelational, relationsId], name: "subrelational_naming")
+  relations_id      Int
+  relations         Relation_Status @relation(fields: [relations_id], references: [id], onDelete: Cascade)
 
+  @@unique([subrelational, relations_id], name: "subrelational_naming")
+  
   instagram_users   Main_Instagram_Data[]
+}
+
+model Update_Instagram_Data_Log {
+  id                Int      @id @default(autoincrement())
+
+  instagram_id      Int
+  instagram_users   Main_Instagram_Data @relation(fields: [instagram_id], references: [id], onDelete: Cascade)
+  
+  username          String     @unique
+  fullname          String?
+  is_private        Boolean
+  media_post_total  Int
+  followers         Int
+  following         Int
+  biography         String?
+  update_on         DateTime
 }
