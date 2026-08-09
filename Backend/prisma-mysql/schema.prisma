@@ -76,7 +76,7 @@ model Update_Instagram_Data_Log {
   instagram_id      Int
   instagram_users   Main_Instagram_Data @relation(fields: [instagram_id], references: [id], onDelete: Cascade)
   
-  username          String     @unique
+  username          String
   fullname          String?
   is_private        Boolean
   media_post_total  Int
@@ -84,4 +84,6 @@ model Update_Instagram_Data_Log {
   following         Int
   biography         String?
   update_on         DateTime
+
+  @@unique([instagram_id, update_on], name: "instagram_update_log_unique")
 }
