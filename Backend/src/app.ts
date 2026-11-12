@@ -8,6 +8,7 @@ import instaRelationalRoutes from './routes/instaRelational.routes'
 import instaSubrelationalRoutes from './routes/instaSubrelational.routes'
 import subrelationRoutes from './routes/subrelation.routes'
 import accountCenterRoutes from './routes/accountCenter.routes'
+import updateInstagramLogRoutes from './routes/updateInstagramLog.routes'
 
 dotenv.config()
 
@@ -15,7 +16,7 @@ const app = express()
 const PORT = process.env.PORT || 3000
 
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '50mb' }))
 
 app.use('/api/insta-user-data', instaRoutes)
 app.use('/api/relational-status-data', relationRoutes)
@@ -23,6 +24,7 @@ app.use('/api/insta-and-relational-user', instaRelationalRoutes)
 app.use('/api/insta-and-subrelational-user', instaSubrelationalRoutes)
 app.use('/api/subrelational-status-data', subrelationRoutes)
 app.use('/api/main-account-center', accountCenterRoutes)
+app.use('/api/update-instagram-log', updateInstagramLogRoutes)
 
 app.get('/', (_req, res) => {
   res.send('API running 🚀')

@@ -377,7 +377,7 @@ export const getInstaRelationalDataText = async (req: Request, res: Response) =>
               select: {
                 id: true,
                 subrelational: true,
-                relationsId: true
+                relations_id: true
               }
             }
           }

@@ -59,7 +59,7 @@ export const createInstaSubrelationalData = async (req: Request, res: Response) 
     }
 
     // Check connectivity between Main_Instagram_Data and Relation_Status
-    const relationId = subrelationStatus.relationsId
+    const relationId = subrelationStatus.relations_id
     const instagramUser =
       await prisma.main_Instagram_Data.findFirst({
         where: {

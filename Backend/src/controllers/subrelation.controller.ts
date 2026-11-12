@@ -7,18 +7,18 @@ import prisma from '../lib/prisma-mysql'
 // Fetch all subrelational data
 export const getAllSubrelationData = async (req: Request, res: Response) => {
   try {
-    const relationsId = req.query.relationsId
-      ? Number(req.query.relationsId)
+    const relations_id = req.query.relations_id
+      ? Number(req.query.relations_id)
       : undefined
-
+    
     // Have subrelational filter
     const { haveSubrelational } = req.query
     const where: any = {}
 
-    if (relationsId !== undefined) {
-      where.relationsId = relationsId
+    if (relations_id !== undefined) {
+      where.relations_id = relations_id
     }
-    if (haveSubrelational === "true" && relationsId !== undefined) {
+    if (haveSubrelational === "true" && relations_id !== undefined) {
       where.instagram_users = {
         some: {}
       }
@@ -79,10 +79,10 @@ export const getSubrelationById = async (req: Request, res: Response) => {
 // Add new Subrelation data
 export const createSubrelationData = async (req: Request, res: Response) => {
   try {
-    const { subrelational, relationsId } = req.body
+    const { subrelational, relations_id } = req.body
 
     // Required fields check
-    if (!subrelational || !relationsId) {
+    if (!subrelational || !relations_id) {
       return res.status(400).json({
         success: false,
         message: 'Subrelational status and relations ID are required'
@@ -92,7 +92,7 @@ export const createSubrelationData = async (req: Request, res: Response) => {
     const data = await prisma.subrelation_Status.create({
       data: {
         subrelational,
-        relationsId
+        relations_id: relations_id
       }
     })
 
