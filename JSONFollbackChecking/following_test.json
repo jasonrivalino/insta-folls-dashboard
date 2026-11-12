@@ -1,0 +1,13 @@
+{
+    "relationships_following": [
+        {
+        "title": "loremipsum",
+        "string_list_data": [
+            {
+            "href": "https://www.instagram.com/_u/loremipsum",
+            "timestamp": 1234567890
+            }
+        ]
+        }
+    ]
+}
